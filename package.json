@@ -1,0 +1,27 @@
+{
+  "name": "cards-app-local",
+  "version": "1.0.0",
+  "description": "Aplicação de coleção de cards de linguagens com IA, SQLite e armazenamento local.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "sqlite",
+    "gemini-api",
+    "ai",
+    "cards",
+    "local"
+  ],
+  "author": "CodeBuddy",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7"
+  }
+}
