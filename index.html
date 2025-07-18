@@ -724,6 +724,7 @@
             let iconHtmlContent = '';
             // Tenta usar a URL do ícone fornecida pelo backend (se existir)
             if (cardData.iconUrl) {
+                // Se o backend retornou uma URL de ícone local, a usamos
                 iconHtmlContent = `<img class="card-logo-svg" src="${API_BASE_URL}${cardData.iconUrl}" alt="${cardData.name} Icon">`;
             } else {
                 // Se não houver iconUrl do backend, usa SVG inline com fallback
@@ -746,7 +747,7 @@
                     case 'react': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
                     case 'angular': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
                     case 'vue.js': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    default: logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>'; break; // Default placeholder
+                    default: logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>'; break;
                 }
                 iconHtmlContent = `<svg class="card-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>${cardData.name}</title>${logoSvgPath}</svg>`;
             }
@@ -770,23 +771,23 @@
                 <div class="card-stats">
                     <div class="stat-item">
                         <span class="stat-label">PWR/</span>
-                        <span class="stat-value">${cardData.stats.pwr}</span>
+                        <span class="stat-value">${cardData.stats && cardData.stats.pwr !== undefined ? cardData.stats.pwr : '--'}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">| VEL/</span>
-                        <span class="stat-value">${cardData.stats.vel}</span>
+                        <span class="stat-value">${cardData.stats && cardData.stats.vel !== undefined ? cardData.stats.vel : '--'}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">| FLX/</span>
-                        <span class="stat-value">${cardData.stats.flx}</span>
+                        <span class="stat-value">${cardData.stats && cardData.stats.flx !== undefined ? cardData.stats.flx : '--'}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">| COM/</span>
-                        <span class="stat-value">${cardData.stats.com}</span>
+                        <span class="stat-value">${cardData.stats && cardData.stats.com !== undefined ? cardData.stats.com : '--'}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">| CRV/</span>
-                        <span class="stat-value">${cardData.stats.crv}</span>
+                        <span class="stat-value">${cardData.stats && cardData.stats.crv !== undefined ? cardData.stats.crv : '--'}</span>
                     </div>
                 </div>
                 <div class="card-footer">
