@@ -66,32 +66,55 @@
         const backButton = document.getElementById('backButton');
         const updateAllCardsButton = document.getElementById('updateAllCardsButton');
         const filterButtons = document.querySelectorAll('.filter-button');
-        let allCardsData = [];
+        let allCardsData = []; // Variável para armazenar todos os cards carregados
 
-        const getFilterCategory = (cardType) => {
+        /**
+         * Mapeia o "type" do card (retornado pela IA) para uma categoria de filtro.
+         * Esta é a lógica de categorização principal.
+         * @param {string} cardType - O tipo de card retornado pela IA (ex: "Backend", "Frontend", "Framework JS").
+         * @param {string} cardName - O nome do card para verificações específicas (ex: "Jupyter Notebook").
+         * @returns {string} A categoria de filtro correspondente (linguagem, framework, etc.).
+         */
+        const getFilterCategory = (cardType, cardName) => {
             const lowerCaseType = cardType.toLowerCase();
+            const lowerCaseName = cardName ? cardName.toLowerCase() : '';
 
+            // Início das verificações específicas para Jupyter Notebook
+            if (lowerCaseName.includes("jupyter notebook") || lowerCaseType.includes("notebook") || lowerCaseType.includes("interactive computing") || lowerCaseType.includes("data science platform")) {
+                return "api_plataforma"; // Jupyter Notebook categorizado como API & Plataforma
+            }
+            // Fim das verificações específicas para Jupyter Notebook
+
+
+            // Linguagens de Programação
             if (lowerCaseType.includes("linguagem") || lowerCaseType.includes("language") || lowerCaseType.includes("programação") || lowerCaseType.includes("scripting") || lowerCaseType === "backend" || lowerCaseType === "frontend" || lowerCaseType.includes("general-purpose")) {
                 return "linguagem";
             }
+            // Frameworks
             if (lowerCaseType.includes("framework") || lowerCaseType.includes("estrutura")) {
                 return "framework";
             }
+            // Bibliotecas
             if (lowerCaseType.includes("biblioteca") || lowerCaseType.includes("library") || lowerCaseType.includes("ui library") || lowerCaseType.includes("data visualization")) {
                 return "biblioteca";
             }
+            // Bancos de Dados
             if (lowerCaseType.includes("banco de dados") || lowerCaseType.includes("database") || lowerCaseType.includes("nosql") || lowerCaseType.includes("sql") || lowerCaseType.includes("data store")) {
                 return "banco_dados";
             }
+            // APIs & Plataformas (inclui runtimes, plataformas em nuvem, etc.)
             if (lowerCaseType.includes("api") || lowerCaseType.includes("platform") || lowerCaseType.includes("plataforma") || lowerCaseType.includes("runtime") || lowerCaseType.includes("service") || lowerCaseType.includes("cloud")) {
                 return "api_plataforma";
             }
+            // Marcação/Estilo
             if (lowerCaseType.includes("marcação") || lowerCaseType.includes("markup") || lowerCaseType.includes("estilo") || lowerCaseType.includes("stylesheet") || lowerCaseType.includes("frontend markup") || lowerCaseType.includes("web standard") || lowerCaseType.includes("document structure") || lowerCaseType.includes("layout")) {
                 return "marcacao_estilo";
             }
+            // Containerization
             if (lowerCaseType.includes("container") || lowerCaseType.includes("docker") || lowerCaseType.includes("kubernetes") || lowerCaseType.includes("orchestration")) {
                 return "containerization";
             }
+            // Mobile
             if (lowerCaseType.includes("mobile") || lowerCaseType.includes("android") || lowerCaseType.includes("ios") || lowerCaseType.includes("cross-platform") || lowerCaseType.includes("react native") || lowerCaseType.includes("flutter") || lowerCaseType.includes("xamarin")) {
                 return "mobile";
             }
@@ -100,6 +123,11 @@
         };
 
 
+        /**
+         * Atualiza a área de mensagens na UI.
+         * @param {string} message - A mensagem a ser exibida.
+         * @param {string} type - Tipo de mensagem ('info', 'error', 'success').
+         */
         const updateMessage = (message, type = 'info') => {
             messageArea.textContent = message;
             messageArea.className = 'message-area';
@@ -112,6 +140,13 @@
             }
         };
 
+        /**
+         * Adapta o tamanho da fonte de um elemento para que seu texto caiba no contêiner.
+         * @param {HTMLElement} element - O elemento HTML cujo texto será ajustado.
+         * @param {number} maxFontSizePx - O tamanho máximo da fonte em pixels.
+         * @param {number} minFontSizePx - O tamanho mínimo da fonte em pixels.
+         * @param {number} [maxLines=1] - O número máximo de linhas permitidas (para texto multilinha).
+         */
         const fitTextToContainer = (element, maxFontSizePx, minFontSizePx, maxLines = 1) => {
             let currentFontSize = maxFontSizePx;
             element.style.fontSize = `${currentFontSize}px`;
@@ -150,6 +185,12 @@
             }
         };
 
+        /**
+         * Cria e retorna um elemento HTML de cartão de linguagem.
+         * Inclui o botão de atualização individual.
+         * @param {Object} cardData - Os dados do cartão.
+         * @returns {HTMLElement} O elemento div do cartão.
+         */
         const createCardElement = (cardData) => {
             const cardDiv = document.createElement('div');
             cardDiv.className = 'card-container';
@@ -216,7 +257,6 @@
                 </div>
             `;
 
-            // Adiciona o evento de clique ao botão de atualização individual
             const updateButton = cardDiv.querySelector('.update-card-button');
             if (updateButton) {
                 updateButton.addEventListener('click', async () => {
@@ -294,7 +334,8 @@
             if (filterCategory === "all") {
                 filtered = allCardsData;
             } else {
-                filtered = allCardsData.filter(card => getFilterCategory(card.type) === filterCategory);
+                // Passa card.name para getFilterCategory
+                filtered = allCardsData.filter(card => getFilterCategory(card.type, card.name) === filterCategory);
             }
             renderCards(filtered, myCollectionGrid);
         };
