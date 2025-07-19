@@ -43,11 +43,11 @@ body {
 
 .search-and-message-container {
     display: flex;
-    flex-direction: column; /* MUDANÇA: Alinha os botões verticalmente por padrão */
+    flex-direction: column; /* Alinha os botões verticalmente por padrão */
     align-items: flex-end; /* Alinha os itens à direita */
     flex-shrink: 0;
     min-width: 280px;
-    gap: 8px; /* MUDANÇA: Espaço entre os botões na vertical */
+    gap: 8px; /* Espaço entre os botões na vertical */
 }
 .search-container {
     display: flex;
@@ -145,14 +145,14 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    flex-grow: 1; /* Permite que o nome ocupe o espaço restante */
-    min-width: 0; /* Permite que o wrapper encolha */
+    flex-grow: 1;
+    min-width: 0;
 }
 .card-logo-svg {
     width: 20px;
     height: 20px;
     fill: #ffffff;
-    flex-shrink: 0; /* Garante que o ícone não encolha */
+    flex-shrink: 0;
 }
 .card-name {
     font-size: 1.4rem;
@@ -163,11 +163,10 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    flex-grow: 1; /* Permite que o nome encolha e use ellipsis */
+    flex-grow: 1;
 }
 .card-type {
     height: 100%;
-    /* width: 45%; Removido para flex-grow */
     color: var(--card-text-color);
     padding: 2px 6px;
     border-radius: 0px 8px 0px 0px;
@@ -265,13 +264,69 @@ body {
     background-color: var(--card-gradient-start);
     color: #ffffff;
     font-size: 0.5rem;
-    text-align: right;
+    /* MUDANÇA: display flex para alinhar "Amaro AI" e botão */
+    display: flex;
+    justify-content: space-between; /* MUDANÇA: Espaço entre os itens */
+    align-items: center; /* MUDANÇA: Centraliza verticalmente */
     border-bottom-left-radius: 12px;
     border-bottom-right-radius: 12px;
     position: absolute;
     bottom: 0;
     left: 0;
     flex-shrink: 0;
+}
+.card-footer span { /* Garante que o texto "Ilustração: Amaro AI" se ajuste */
+    flex-grow: 1;
+    text-align: right; /* MUDANÇA: Alinha o texto à direita */
+    margin-right: 5px; /* MUDANÇA: Espaço entre o texto e o botão */
+}
+
+
+.footer-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px auto 0 auto;
+    padding: 10px 15px;
+    background-color: #f8fafc;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    text-align: left;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+.footer-section h2 {
+    font-size: 0.9rem;
+    font-weight: normal;
+    color: #64748b;
+    margin-bottom: 8px;
+    text-align: left;
+}
+.footer-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+.footer-section li {
+    margin-bottom: 5px;
+    font-size: 0.7rem;
+    color: #94a3b8;
+    line-height: 1.3;
+    width: 48%;
+    box-sizing: border-box;
+    padding-right: 10px;
+}
+.footer-section li:nth-child(odd) {
+    text-align: left;
+}
+.footer-section li:nth-child(even) {
+    text-align: left;
+}
+.footer-section li strong {
+    color: #64748b;
+    font-size: 0.75rem;
 }
 
 /* Nova seção de navegação em index.html */
@@ -326,6 +381,8 @@ body {
     border-radius: 15px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     flex-shrink: 0;
+    /* Adicionado min-height aqui para dar espaço ao conteúdo */
+    min-height: 400px; 
 }
 
 /* Classe para ocultar elementos */
@@ -345,18 +402,18 @@ body {
 
 /* Estilo específico para o botão de voltar em collection.html */
 .back-button {
-    background-color: #7f8c8d; /* Cinza */
+    background-color: #7f8c8d;
 }
 .back-button:hover {
-    background-color: #5c6a6b; /* Cinza mais escuro */
+    background-color: #5c6a6b;
 }
 
 /* Estilo para o novo botão de Atualizar Todos */
 .refresh-all-button {
-    background-color: #3498db; /* Um azul vibrante */
+    background-color: #3498db;
 }
 .refresh-all-button:hover {
-    background-color: #2980b9; /* Azul mais escuro no hover */
+    background-color: #2980b9;
 }
 
 
@@ -441,9 +498,14 @@ body {
     border: none;
     cursor: pointer;
     padding: 0;
-    margin-left: 5px; /* Espaço entre o tipo e o botão */
-    line-height: 1; /* Garante alinhamento vertical do SVG */
-    flex-shrink: 0; /* Impede que ele encolha */
+    /* Removido margin-left para alinhar ao final do flex item */
+    line-height: 1;
+    flex-shrink: 0;
+    display: flex; /* MUDANÇA: Para alinhar o ícone */
+    align-items: center; /* MUDANÇA: Centraliza o ícone verticalmente */
+    justify-content: center; /* MUDANÇA: Centraliza o ícone horizontalmente */
+    margin-left: auto; /* MUDANÇA: Empurra para a direita dentro do flex container */
+    padding-left: 5px; /* MUDANÇA: Adiciona um pouco de espaço para não colar no texto "Amaro AI" */
 }
 
 .update-card-button:disabled {
@@ -452,16 +514,15 @@ body {
 }
 
 .update-card-button .update-icon {
-    width: 18px; /* Tamanho do ícone */
-    height: 18px;
-    stroke: white; /* Cor do stroke do ícone */
+    width: 14px; /* MUDANÇA: Ícone ainda menor */
+    height: 14px; /* MUDANÇA: Ícone ainda menor */
+    stroke: #e0e0e0; /* MUDANÇA: Cor mais suave para o ícone */
     transition: stroke 0.2s ease;
 }
 
 .update-card-button:hover .update-icon {
-    stroke: #ffcc00; /* Um amarelo no hover para destacar */
+    stroke: #fff; /* MUDANÇA: Branco puro no hover para destacar */
 }
-
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -570,15 +631,15 @@ body {
 
     /* Ajusta botões no cabeçalho da coleção */
     .search-and-message-container {
-        flex-direction: column; /* Força empilhamento em telas pequenas */
+        flex-direction: column;
         align-items: center;
         gap: 5px;
-        min-width: unset; /* Remove min-width para flexibilidade */
+        min-width: unset;
     }
     .search-and-message-container .go-to-collection-button {
-        width: 90%; /* Ocupa mais largura em mobile */
+        width: 90%;
         max-width: 350px;
-        margin: 5px 0; /* Margem vertical entre eles */
+        margin: 5px 0;
     }
     .search-and-message-container .message-area {
         text-align: center;
@@ -606,14 +667,17 @@ body {
     }
 
     /* Ajuste para o botão de atualização individual em cards menores */
-    .card-header {
-        padding-right: 5px; /* Reduz padding para dar mais espaço */
+    .card-footer span { /* Garante que o texto Amaro AI não empurre o botão */
+        flex-grow: 1; /* Permite que ele cresça e empurre o botão */
+        margin-right: 2px; /* Reduz espaço */
     }
     .update-card-button {
-        margin-left: 2px; /* Reduz espaço */
+        padding: 0; /* MUDANÇA: remove padding para não adicionar espaço extra */
+        margin-left: 0; /* Garante que não haja margem extra à esquerda */
+        min-width: unset; /* Remove qualquer min-width que possa interferir */
     }
     .update-card-button .update-icon {
-        width: 16px; /* Ícone um pouco menor em mobile */
-        height: 16px;
+        width: 12px; /* Ícone ainda menor em mobile */
+        height: 12px;
     }
 }

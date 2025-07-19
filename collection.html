@@ -64,48 +64,34 @@
         const myCollectionGrid = document.getElementById('myCollectionGrid');
         const messageArea = document.getElementById('messageArea');
         const backButton = document.getElementById('backButton');
-        const updateAllCardsButton = document.getElementById('updateAllCardsButton'); // Novo botão
+        const updateAllCardsButton = document.getElementById('updateAllCardsButton');
         const filterButtons = document.querySelectorAll('.filter-button');
-        let allCardsData = []; // Variável para armazenar todos os cards carregados
+        let allCardsData = [];
 
-        /**
-         * Mapeia o "type" do card (retornado pela IA) para uma categoria de filtro.
-         * Esta é a lógica de categorização principal.
-         * @param {string} cardType - O tipo de card retornado pela IA (ex: "Backend", "Frontend", "Framework JS").
-         * @returns {string} A categoria de filtro correspondente (linguagem, framework, etc.).
-         */
         const getFilterCategory = (cardType) => {
             const lowerCaseType = cardType.toLowerCase();
 
-            // Linguagens de Programação
             if (lowerCaseType.includes("linguagem") || lowerCaseType.includes("language") || lowerCaseType.includes("programação") || lowerCaseType.includes("scripting") || lowerCaseType === "backend" || lowerCaseType === "frontend" || lowerCaseType.includes("general-purpose")) {
                 return "linguagem";
             }
-            // Frameworks
-            if (lowerCaseType.includes("framework") || lowerCaseType.includes("estrutura") || lowerCaseType.includes("web framework") || lowerCaseType.includes("frontend framework") || lowerCaseType.includes("backend framework") || lowerCaseType.includes("fullstack framework")) {
+            if (lowerCaseType.includes("framework") || lowerCaseType.includes("estrutura")) {
                 return "framework";
             }
-            // Bibliotecas
             if (lowerCaseType.includes("biblioteca") || lowerCaseType.includes("library") || lowerCaseType.includes("ui library") || lowerCaseType.includes("data visualization")) {
                 return "biblioteca";
             }
-            // Bancos de Dados
             if (lowerCaseType.includes("banco de dados") || lowerCaseType.includes("database") || lowerCaseType.includes("nosql") || lowerCaseType.includes("sql") || lowerCaseType.includes("data store")) {
                 return "banco_dados";
             }
-            // APIs & Plataformas (inclui runtimes, plataformas em nuvem, etc.)
             if (lowerCaseType.includes("api") || lowerCaseType.includes("platform") || lowerCaseType.includes("plataforma") || lowerCaseType.includes("runtime") || lowerCaseType.includes("service") || lowerCaseType.includes("cloud")) {
                 return "api_plataforma";
             }
-            // Marcação/Estilo
             if (lowerCaseType.includes("marcação") || lowerCaseType.includes("markup") || lowerCaseType.includes("estilo") || lowerCaseType.includes("stylesheet") || lowerCaseType.includes("frontend markup") || lowerCaseType.includes("web standard") || lowerCaseType.includes("document structure") || lowerCaseType.includes("layout")) {
                 return "marcacao_estilo";
             }
-            // Containerization
             if (lowerCaseType.includes("container") || lowerCaseType.includes("docker") || lowerCaseType.includes("kubernetes") || lowerCaseType.includes("orchestration")) {
                 return "containerization";
             }
-            // Mobile
             if (lowerCaseType.includes("mobile") || lowerCaseType.includes("android") || lowerCaseType.includes("ios") || lowerCaseType.includes("cross-platform") || lowerCaseType.includes("react native") || lowerCaseType.includes("flutter") || lowerCaseType.includes("xamarin")) {
                 return "mobile";
             }
@@ -114,11 +100,6 @@
         };
 
 
-        /**
-         * Atualiza a área de mensagens na UI.
-         * @param {string} message - A mensagem a ser exibida.
-         * @param {string} type - Tipo de mensagem ('info', 'error', 'success').
-         */
         const updateMessage = (message, type = 'info') => {
             messageArea.textContent = message;
             messageArea.className = 'message-area';
@@ -131,13 +112,6 @@
             }
         };
 
-        /**
-         * Adapta o tamanho da fonte de um elemento para que seu texto caiba no contêiner.
-         * @param {HTMLElement} element - O elemento HTML cujo texto será ajustado.
-         * @param {number} maxFontSizePx - O tamanho máximo da fonte em pixels.
-         * @param {number} minFontSizePx - O tamanho mínimo da fonte em pixels.
-         * @param {number} [maxLines=1] - O número máximo de linhas permitidas (para texto multilinha).
-         */
         const fitTextToContainer = (element, maxFontSizePx, minFontSizePx, maxLines = 1) => {
             let currentFontSize = maxFontSizePx;
             element.style.fontSize = `${currentFontSize}px`;
@@ -176,16 +150,9 @@
             }
         };
 
-        /**
-         * Cria e retorna um elemento HTML de cartão de linguagem.
-         * Inclui o botão de atualização individual.
-         * @param {Object} cardData - Os dados do cartão.
-         * @returns {HTMLElement} O elemento div do cartão.
-         */
         const createCardElement = (cardData) => {
             const cardDiv = document.createElement('div');
             cardDiv.className = 'card-container';
-            // Adiciona o atributo data-name para fácil acesso ao nome da linguagem
             cardDiv.dataset.languageName = cardData.name; 
 
             const theme = getLanguageTheme(cardData.name);
@@ -208,12 +175,6 @@
                         <div class="card-name" data-max-font="1.4" data-min-font="0.8">${cardData.name}</div>
                     </div>
                     <div class="card-type" data-max-font="0.8" data-min-font="0.6">${cardData.type}</div>
-                    <button class="update-card-button" title="Atualizar este card" data-language-name="${cardData.name}">
-                        <svg class="update-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" stroke="white" stroke-width="1.5"/>
-                            <path d="M12 6V12L16 14" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
                 </div>
                 <div class="card-image-wrapper">
                     <img class="card-image" src="${cardData.imageUrl || API_BASE_URL + '/public/images/placeholder.png'}"
@@ -245,7 +206,13 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    Ilustração: Amaro AI
+                    <span>Ilustração: Amaro AI</span>
+                    <button class="update-card-button" title="Atualizar este card" data-language-name="${cardData.name}">
+                        <svg class="update-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" stroke="white" stroke-width="1.5"/>
+                            <path d="M12 6V12L16 14" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             `;
 
@@ -263,11 +230,6 @@
             return cardDiv;
         };
 
-        /**
-         * Renderiza uma coleção de cards em um contêiner específico e ajusta o texto.
-         * @param {Array<Object>} cardsArray - Um array de objetos de dados de card.
-         * @param {HTMLElement} containerElement - O elemento HTML onde os cards serão renderizados.
-         */
         const renderCards = (cardsArray, containerElement) => {
             containerElement.innerHTML = '';
             if (cardsArray.length === 0) {
@@ -299,13 +261,8 @@
             });
         };
 
-        /**
-         * Carrega a coleção de cards do backend e armazena.
-         * Em seguida, aplica o filtro ativo (ou "all" por padrão).
-         */
         const loadCollectionAndApplyFilter = async () => {
             updateMessage("Carregando sua coleção de cards...", "info");
-            // Desabilita botões para evitar cliques múltiplos
             updateAllCardsButton.disabled = true;
             filterButtons.forEach(btn => btn.disabled = true);
             
@@ -315,9 +272,8 @@
                     throw new Error(`Erro ao carregar cards: ${response.status} ${response.statusText}`);
                 }
                 const cards = await response.json();
-                allCardsData = cards; // Armazena todos os cards
+                allCardsData = cards;
 
-                // Mantém o filtro ativo após a atualização
                 const activeFilterButton = document.querySelector('.filter-button.active');
                 const currentFilter = activeFilterButton ? activeFilterButton.dataset.filter : 'all';
                 filterCards(currentFilter);
@@ -328,16 +284,11 @@
                 updateMessage("Erro ao carregar sua coleção de cards. Verifique o console do servidor e do navegador. O servidor Node.js pode não estar rodando.", "error");
                 myCollectionGrid.innerHTML = '<p class="text-red-500">Erro ao carregar cards. O servidor Node.js pode não estar rodando.</p>';
             } finally {
-                // Reabilita botões
                 updateAllCardsButton.disabled = false;
                 filterButtons.forEach(btn => btn.disabled = false);
             }
         };
 
-        /**
-         * Filtra e renderiza os cards com base na categoria selecionada.
-         * @param {string} filterCategory - A categoria para filtrar (e.g., 'linguagem', 'framework', 'all').
-         */
         const filterCards = (filterCategory) => {
             let filtered = [];
             if (filterCategory === "all") {
@@ -348,15 +299,10 @@
             renderCards(filtered, myCollectionGrid);
         };
 
-        /**
-         * Envia uma requisição para atualizar um card específico.
-         * @param {string} languageName - O nome da linguagem do card a ser atualizado.
-         */
         const updateSpecificCard = async (languageName) => {
             updateMessage(`Atualizando card para "${languageName}"... Isso pode levar um momento.`, "info");
-            updateAllCardsButton.disabled = true; // Desabilita o botão geral também
-            filterButtons.forEach(btn => btn.disabled = true); // Desabilita filtros
-            // Opcional: Desabilitar o botão de atualização do próprio card clicado
+            updateAllCardsButton.disabled = true;
+            filterButtons.forEach(btn => btn.disabled = true);
             const cardElement = document.querySelector(`.card-container[data-language-name="${languageName}"]`);
             if (cardElement) {
                 const button = cardElement.querySelector('.update-card-button');
@@ -377,7 +323,6 @@
 
                 const result = await response.json();
                 updateMessage(result.message, "success");
-                // Recarrega a coleção completa para refletir a mudança
                 await loadCollectionAndApplyFilter();
 
             } catch (error) {
@@ -394,9 +339,6 @@
             }
         };
 
-        /**
-         * Envia uma requisição para atualizar todos os cards.
-         */
         const updateAllCards = async () => {
             if (!confirm("Tem certeza que deseja atualizar TODOS os cards da sua coleção? Isso pode levar vários minutos e consumir cota da sua API Gemini.")) {
                 return;
@@ -410,7 +352,7 @@
                 const response = await fetch(`${API_BASE_URL}/api/cards/update`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({}) // Corpo vazio para indicar "todos"
+                    body: JSON.stringify({})
                 });
 
                 if (!response.ok) {
@@ -423,10 +365,9 @@
 
                 if (result.failed && result.failed.length > 0) {
                     console.warn("Cards que falharam na atualização:", result.failed);
-                    updateMessage(`Atualização em massa concluída. Alguns cards falharam: ${result.failed.join(', ')}. Verifique o console para detalhes.`, "warning");
+                    updateMessage(`Atualização em massa concluída. Alguns cards falharam. Verifique o console para detalhes.`, "warning");
                 }
                 
-                // Recarrega a coleção completa para refletir as mudanças
                 await loadCollectionAndApplyFilter();
 
             } catch (error) {
@@ -437,7 +378,6 @@
                 filterButtons.forEach(btn => btn.disabled = false);
             }
         };
-
 
         // Event Listeners
         backButton.addEventListener('click', () => {
@@ -456,7 +396,6 @@
             });
         });
 
-        // Inicia o carregamento da coleção quando a janela é totalmente carregada
         window.onload = loadCollectionAndApplyFilter;
     </script>
 </body>
