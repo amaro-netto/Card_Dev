@@ -3,7 +3,7 @@ body {
     background-color: #f0f2f5;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 100vh; /* Garante que o body ocupe a altura mínima da viewport */
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -43,11 +43,11 @@ body {
 
 .search-and-message-container {
     display: flex;
-    flex-direction: column; /* Alinha os botões verticalmente por padrão */
-    align-items: flex-end; /* Alinha os itens à direita */
+    flex-direction: column;
+    align-items: flex-end;
     flex-shrink: 0;
     min-width: 280px;
-    gap: 8px; /* Espaço entre os botões na vertical */
+    gap: 8px;
 }
 .search-container {
     display: flex;
@@ -122,7 +122,7 @@ body {
     flex-direction: column;
     align-items: center;
     position: relative;
-    border: 3px solid var(--card-border-main); 
+    border: 3px solid var(--card-border-main);
     flex-shrink: 0;
 }
 
@@ -230,32 +230,38 @@ body {
 .card-stats {
     width: 100%;
     display: flex;
-    justify-content: space-around;
+    justify-content: space-around; /* Distribui o espaço igualmente */
     align-items: center;
-    padding: 0px 8px 20px 8px;
+    padding: 5px 4px; /* Reduz padding para economizar espaço */
     background-color: var(--card-bg-light);
     border-top: 1px solid var(--card-border-light);
-    flex-wrap: nowrap;
+    flex-wrap: nowrap; /* Garante que os stats fiquem na mesma linha */
     height: auto;
     flex-shrink: 0;
 }
 .stat-item {
     display: flex;
+    flex-direction: column; /* Alinha label e value verticalmente */
     align-items: center;
-    padding: 4px;
+    padding: 0 2px; /* Reduz padding interno do item */
     font-weight: bold;
     color: var(--card-text-color);
-    flex-shrink: 0;
+    flex: 1; /* Permite que os itens cresçam e encolham igualmente */
+    min-width: 0; /* Permite que o item encolha */
+    text-align: center;
+    white-space: nowrap; /* Evita que o texto da label ou value quebre */
+    overflow: hidden; /* Esconde overflow se o texto for muito longo */
+    text-overflow: ellipsis; /* Adiciona reticências se o texto for muito longo */
 }
 .stat-label {
-    font-size: 0.7rem;
+    font-size: 0.65rem; /* Reduz ainda mais a fonte da label */
     color: #334155;
-    margin-bottom: 1px;
+    margin-bottom: 0px; /* Remove margem inferior para mais compactação */
     text-transform: uppercase;
     letter-spacing: 0.1px;
 }
 .stat-value {
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* Reduz a fonte do valor */
     color: var(--card-value-color);
 }
 .card-footer {
@@ -264,24 +270,25 @@ body {
     background-color: var(--card-gradient-start);
     color: #ffffff;
     font-size: 0.5rem;
-    /* MUDANÇA: display flex para alinhar "Amaro AI" e botão */
     display: flex;
-    justify-content: space-between; /* MUDANÇA: Espaço entre os itens */
-    align-items: center; /* MUDANÇA: Centraliza verticalmente */
+    justify-content: space-between;
+    align-items: center;
     border-bottom-left-radius: 12px;
     border-bottom-right-radius: 12px;
     position: absolute;
     bottom: 0;
     left: 0;
     flex-shrink: 0;
+    z-index: 10;
 }
-.card-footer span { /* Garante que o texto "Ilustração: Amaro AI" se ajuste */
+.card-footer span {
     flex-grow: 1;
-    text-align: right; /* MUDANÇA: Alinha o texto à direita */
-    margin-right: 5px; /* MUDANÇA: Espaço entre o texto e o botão */
+    text-align: right;
+    margin-right: 5px;
 }
 
 
+/* Rodapé Global */
 .footer-section {
     width: 100%;
     max-width: 1200px;
@@ -292,7 +299,8 @@ body {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
     text-align: left;
     border: 1px solid #e2e8f0;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Garante que o rodapé não encolha */
+    margin-top: auto; /* Empurra o rodapé para o final do contêiner flex pai */
 }
 .footer-section h2 {
     font-size: 0.9rem;
@@ -381,8 +389,8 @@ body {
     border-radius: 15px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     flex-shrink: 0;
-    /* Adicionado min-height aqui para dar espaço ao conteúdo */
-    min-height: 400px; 
+    /* Ajustado min-height para garantir que o rodapé não suba */
+    min-height: 400px;
 }
 
 /* Classe para ocultar elementos */
@@ -498,14 +506,14 @@ body {
     border: none;
     cursor: pointer;
     padding: 0;
-    /* Removido margin-left para alinhar ao final do flex item */
     line-height: 1;
     flex-shrink: 0;
-    display: flex; /* MUDANÇA: Para alinhar o ícone */
-    align-items: center; /* MUDANÇA: Centraliza o ícone verticalmente */
-    justify-content: center; /* MUDANÇA: Centraliza o ícone horizontalmente */
-    margin-left: auto; /* MUDANÇA: Empurra para a direita dentro do flex container */
-    padding-left: 5px; /* MUDANÇA: Adiciona um pouco de espaço para não colar no texto "Amaro AI" */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Alinhamento ao final do flex-container pai (card-footer) */
+    margin-left: auto;
+    padding-left: 5px; /* Espaço entre o texto "Amaro AI" e o botão */
 }
 
 .update-card-button:disabled {
@@ -514,15 +522,16 @@ body {
 }
 
 .update-card-button .update-icon {
-    width: 14px; /* MUDANÇA: Ícone ainda menor */
-    height: 14px; /* MUDANÇA: Ícone ainda menor */
-    stroke: #e0e0e0; /* MUDANÇA: Cor mais suave para o ícone */
+    width: 14px;
+    height: 14px;
+    stroke: #e0e0e0;
     transition: stroke 0.2s ease;
 }
 
 .update-card-button:hover .update-icon {
-    stroke: #fff; /* MUDANÇA: Branco puro no hover para destacar */
+    stroke: #fff;
 }
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -667,17 +676,17 @@ body {
     }
 
     /* Ajuste para o botão de atualização individual em cards menores */
-    .card-footer span { /* Garante que o texto Amaro AI não empurre o botão */
-        flex-grow: 1; /* Permite que ele cresça e empurre o botão */
-        margin-right: 2px; /* Reduz espaço */
+    .card-footer span {
+        flex-grow: 1;
+        margin-right: 2px;
     }
     .update-card-button {
-        padding: 0; /* MUDANÇA: remove padding para não adicionar espaço extra */
-        margin-left: 0; /* Garante que não haja margem extra à esquerda */
-        min-width: unset; /* Remove qualquer min-width que possa interferir */
+        padding: 0;
+        margin-left: 0;
+        min-width: unset;
     }
     .update-card-button .update-icon {
-        width: 12px; /* Ícone ainda menor em mobile */
+        width: 12px;
         height: 12px;
     }
 }
