@@ -71,9 +71,9 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
 app.use(cors()); // Permite requisições de diferentes origens (necessário para frontend local)
 app.use(bodyParser.json({ limit: '10mb' })); // Suporta JSON bodies, com limite maior para Base64
 
-// Serve o index.html diretamente da raiz do projeto
+[cite_start]// Serve o index.html diretamente da raiz do projeto [cite: 76]
 app.use(express.static(__dirname)); 
-// Serve a pasta public/ para assets como imagens e ícones
+[cite_start]// Serve a pasta public/ para assets como imagens e ícones [cite: 78]
 app.use('/public', express.static(path.join(__dirname, 'public'))); 
 
 // --- Funções para interagir com a API Gemini (no backend) ---
@@ -85,20 +85,19 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
  */
 async function getCardDataFromGemini(languageName) {
     const chatHistory = [];
-    // PROMPT ATUALIZADO: Instruindo a IA a usar categorias específicas.
     const prompt = `Gere dados para um cartão de jogo de linguagem de programação, no estilo de um jogo de cartas de fantasia, para a linguagem ${languageName}.
 Inclua o nome, um tipo (escolha entre: "Linguagem", "Framework", "Biblioteca", "Banco de Dados", "API & Plataforma", "Marcação/Estilo", "Containerization", "Mobile" ou "Outros" - selecione o que melhor se encaixa no contexto), uma descrição concisa em português (máximo 30 palavras), estatísticas de poder (PWR), velocidade (VEL), flexibilidade (FLX), comunidade (COM) e curva de aprendizado (CRV).
 As estatísticas devem ser valores **entre 0 e 100** e devem refletir as características reais da linguagem:
-- PWR (Poder): Capacidade da linguagem para lidar com tarefas complexas e de alta demanda.
-- VEL (Velocidade): Desempenho em tempo de execução e eficiência.
-- FLX (Flexibilidade): Adaptabilidade para diferentes paradigmas e domínios.
-- COM (Comunidade): Tamanho e atividade da comunidade de desenvolvedores e recursos disponíveis.
-- CRV (Curva de Aprendizado): Facilidade ou dificuldade para iniciantes aprenderem e dominarem a linguagem.
-Além disso, forneça um prompt detalhado para gerar uma ilustração de personagem de anime no estilo Pokémon de 1ª geração para ${languageName}, com foco em suas características principais.
-O prompt da imagem deve especificar um aspecto retangular ligeiramente vertical (próximo de 1:1 ou 4:5) e cores que combinem com a linguagem (ex: laranjas e vermelhos para Java, roxos e laranjas para Kotlin).
-**Se '${languageName}' não for uma linguagem de programação, de marcação ou tecnologia web principal e reconhecível, defina 'isValidLanguage' como false e os outros campos podem ser vazios ou padrão.**`;
+- [cite_start]PWR (Poder): Capacidade da linguagem para lidar com tarefas complexas e de alta demanda. [cite: 16]
+- [cite_start]VEL (Velocidade): Desempenho em tempo de execução e eficiência. [cite: 17]
+- [cite_start]FLX (Flexibilidade): Adaptabilidade para diferentes paradigmas e domínios. [cite: 18]
+- [cite_start]COM (Comunidade): Tamanho e atividade da comunidade de desenvolvedores e recursos disponíveis. [cite: 19]
+- [cite_start]CRV (Curva de Aprendizado): Facilidade ou dificuldade para iniciantes aprenderem e dominarem a linguagem. [cite: 20]
+[cite_start]Além disso, forneça um prompt detalhado para gerar uma ilustração de personagem de anime no estilo Pokémon de 1ª geração para ${languageName}, com foco em suas características principais. [cite: 762]
+[cite_start]O prompt da imagem deve especificar um aspecto retangular ligeiramente vertical (próximo de 1:1 ou 4:5) e cores que combinem com a linguagem (ex: laranjas e vermelhos para Java, roxos e laranjas para Kotlin). [cite: 763]
+[cite_start]**Se '${languageName}' não for uma linguagem, framework, ferramenta ou tecnologia de desenvolvimento reconhecível, defina 'isValidLanguage' como false e os outros campos podem ser vazios ou padrão.**`; [cite: 764]
     
-    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+    [cite_start]chatHistory.push({ role: "user", parts: [{ text: prompt }] }); [cite: 765]
 
     const payload = {
         contents: chatHistory,
@@ -107,119 +106,119 @@ O prompt da imagem deve especificar um aspecto retangular ligeiramente vertical 
             responseSchema: {
                 type: "OBJECT",
                 properties: {
-                    "name": { "type": "STRING" },
-                    "type": { "type": "STRING" },
-                    "description": { "type": "STRING" },
+                    [cite_start]"name": { "type": "STRING" }, [cite: 767]
+                    [cite_start]"type": { "type": "STRING" }, [cite: 768]
+                    [cite_start]"description": { "type": "STRING" }, [cite: 769]
                     "stats": {
                         "type": "OBJECT",
                         "properties": {
-                            "pwr": { "type": "NUMBER" },
-                            "vel": { "type": "NUMBER" },
-                            "flx": { "type": "NUMBER" },
-                            "com": { "type": "NUMBER" },
-                            "crv": { "type": "NUMBER" }
+                            [cite_start]"pwr": { "type": "NUMBER" }, [cite: 769]
+                            [cite_start]"vel": { "type": "NUMBER" }, [cite: 769]
+                            [cite_start]"flx": { "type": "NUMBER" }, [cite: 769]
+                            [cite_start]"com": { "type": "NUMBER" }, [cite: 769]
+                            [cite_start]"crv": { "type": "NUMBER" } [cite: 770]
                         },
-                        "required": ["pwr", "vel", "flx", "com", "crv"]
+                        [cite_start]"required": ["pwr", "vel", "flx", "com", "crv"] [cite: 771]
                     },
-                    "imagePrompt": { "type": "STRING" },
-                    "isValidLanguage": { "type": "BOOLEAN" } 
+                    [cite_start]"imagePrompt": { "type": "STRING" }, [cite: 771]
+                    [cite_start]"isValidLanguage": { "type": "BOOLEAN" } [cite: 772]
                 },
-                "required": ["name", "type", "description", "stats", "imagePrompt", "isValidLanguage"]
+                [cite_start]"required": ["name", "type", "description", "stats", "imagePrompt", "isValidLanguage"] [cite: 772]
             }
         }
     };
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+    [cite_start]const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`; [cite: 773]
 
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-        });
+        [cite_start]}); [cite: 774]
 
         if (!response.ok) {
-            const errorBody = await response.text();
-            console.error(`Erro na requisição da API de Texto Gemini: ${response.status} ${response.statusText}`, errorBody);
+            [cite_start]const errorBody = await response.text(); [cite: 775]
+            [cite_start]console.error(`Erro na requisição da API de Texto Gemini: ${response.status} ${response.statusText}`, errorBody); [cite: 776]
             return null;
         }
 
-        const rawTextResult = await response.text();
+        [cite_start]const rawTextResult = await response.text(); [cite: 777]
         if (typeof rawTextResult === 'string' && rawTextResult.trim().length > 0) {
             try {
-                const parsedResult = JSON.parse(rawTextResult);
+                [cite_start]const parsedResult = JSON.parse(rawTextResult); [cite: 778]
                 if (parsedResult.candidates && parsedResult.candidates.length > 0 &&
                     parsedResult.candidates[0].content && parsedResult.candidates[0].content.parts &&
                     parsedResult.candidates[0].content.parts.length > 0) {
 
-                    const jsonString = parsedResult.candidates[0].content.parts[0].text;
+                    [cite_start]const jsonString = parsedResult.candidates[0].content.parts[0].text; [cite: 779]
                     if (typeof jsonString === 'string' && jsonString.trim().length > 0) {
                         try {
-                            const parsedJson = JSON.parse(jsonString);
+                            [cite_start]const parsedJson = JSON.parse(jsonString); [cite: 780]
                             if (typeof parsedJson.isValidLanguage === 'boolean') {
-                                return parsedJson;
+                                [cite_start]return parsedJson; [cite: 780]
                             } else {
-                                console.error("JSON da API de Texto não contém a propriedade 'isValidLanguage' esperada.", parsedJson);
+                                [cite_start]console.error("JSON da API de Texto não contém a propriedade 'isValidLanguage' esperada.", parsedJson); [cite: 781]
                                 return null;
                             }
                         } catch (parseError) {
-                            console.error("Erro ao fazer parse do JSON interno da API de Texto (parts[0].text):", parseError);
+                            [cite_start]console.error("Erro ao fazer parse do JSON interno da API de Texto (parts[0].text):", parseError); [cite: 782]
                             return null;
                         }
                     } else {
-                        console.error("Conteúdo de texto da API de Texto (parts[0].text) está vazio ou não é uma string válida.", jsonString);
+                        [cite_start]console.error("Conteúdo de texto da API de Texto (parts[0].text) está vazio ou não é uma string válida.", jsonString); [cite: 784]
                         return null;
                     }
                 } else {
-                    console.error("Estrutura de resposta inesperada ou conteúdo ausente da API de Texto (candidates/content/parts).", parsedResult);
+                    [cite_start]console.error("Estrutura de resposta inesperada ou conteúdo ausente da API de Texto (candidates/content/parts).", parsedResult); [cite: 786]
                     return null;
                 }
             } catch (parseErrorOuter) {
-                console.error("Erro ao fazer parse do JSON da resposta principal da API de Texto:", parseErrorOuter);
+                [cite_start]console.error("Erro ao fazer parse do JSON da resposta principal da API de Texto:", parseErrorOuter); [cite: 787]
                 return null;
             }
         } else {
-            console.error("Resposta bruta da API de Texto está vazia ou não é uma string válida.", rawTextResult);
+            [cite_start]console.error("Resposta bruta da API de Texto está vazia ou não é uma string válida.", rawTextResult); [cite: 789]
             return null;
         }
     } catch (error) {
-        console.error("Erro ao chamar a API Gemini para dados do card:", error);
+        [cite_start]console.error("Erro ao chamar a API Gemini para dados do card:", error); [cite: 790]
         return null;
     }
 }
 
 /**
  * Chama a API Gemini para gerar uma imagem em Base64.
- * @param {string} prompt - Prompt para a geração da imagem.
- * @returns {Promise<string|null>} Imagem Base64 (data URL) ou null em caso de erro.
+ * [cite_start]@param {string} prompt - Prompt para a geração da imagem. [cite: 793]
+ * [cite_start]@returns {Promise<string|null>} Imagem Base64 (data URL) ou null em caso de erro. [cite: 794]
  */
 async function generateImageFromGemini(prompt) {
-    const payload = { instances: { prompt: prompt }, parameters: { "sampleCount": 1} };
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${GEMINI_API_KEY}`;
+    [cite_start]const payload = { instances: { prompt: prompt }, parameters: { "sampleCount": 1} }; [cite: 795]
+    [cite_start]const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${GEMINI_API_KEY}`; [cite: 795]
 
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-        });
+        [cite_start]}); [cite: 797]
 
         if (!response.ok) {
-            const errorBody = await response.text();
-            console.error(`Erro na requisição da API de Imagem Gemini: ${response.status} ${response.statusText}`, errorBody);
+            [cite_start]const errorBody = await response.text(); [cite: 798]
+            [cite_start]console.error(`Erro na requisição da API de Imagem Gemini: ${response.status} ${response.statusText}`, errorBody); [cite: 799]
             return null;
         }
 
-        const result = await response.json();
+        [cite_start]const result = await response.json(); [cite: 800]
 
         if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
-            return `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+            [cite_start]return `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`; [cite: 801]
         } else {
-            console.error("Estrutura de resposta inesperada ou conteúdo de imagem ausente da API de Imagem.", result);
+            [cite_start]console.error("Estrutura de resposta inesperada ou conteúdo de imagem ausente da API de Imagem.", result); [cite: 802]
             return null;
         }
     } catch (error) {
-        console.error("Erro ao chamar a API Gemini para gerar imagem:", error);
+        [cite_start]console.error("Erro ao chamar a API Gemini para gerar imagem:", error); [cite: 803]
         return null;
     }
 }
@@ -238,7 +237,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
     const cardData = await getCardDataFromGemini(normalizedLanguageName);
 
     if (!cardData || cardData.isValidLanguage === false) {
-        return { success: false, error: `"${normalizedLanguageName}" não é uma linguagem de programação, de marcação ou tecnologia web principal reconhecível.`, isValidLanguage: false };
+        return { success: false, error: `"${normalizedLanguageName}" não é uma linguagem, framework, ferramenta ou tecnologia de desenvolvimento reconhecível.`, isValidLanguage: false };
     }
     
     cardData.name = normalizedLanguageName; // Garante que o nome final no cardData seja o normalizado
@@ -288,6 +287,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
 
     // 5. Salvar/Atualizar o card no banco de dados SQLite
     return new Promise((resolve, reject) => {
+        // REPLACE INTO: Insere se não existe, atualiza se existe (baseado na PRIMARY KEY 'name')
         const stmt = db.prepare(`REPLACE INTO cards (name, type, description, pwr, vel, flx, com, crv, imagePrompt, imageUrl, iconUrl, isValidLanguage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
         stmt.run(
             normalizedLanguageName,
@@ -331,7 +331,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
 
 // --- Rotas da API ---
 
-// Rota para obter todos os cards
+[cite_start]// Rota para obter todos os cards [cite: 805]
 app.get('/api/cards', (req, res) => {
     db.all("SELECT * FROM cards", [], (err, rows) => {
         if (err) {
@@ -342,7 +342,7 @@ app.get('/api/cards', (req, res) => {
     });
 });
 
-// Rota para gerar e salvar um novo card (ou obter um existente)
+[cite_start]// Rota para gerar e salvar um novo card (ou obter um existente) [cite: 807]
 app.post('/api/cards', async (req, res) => {
     const languageName = req.body.languageName;
 
@@ -352,13 +352,13 @@ app.post('/api/cards', async (req, res) => {
 
     const normalizedLanguageName = languageName.charAt(0).toUpperCase() + languageName.slice(1).toLowerCase();
 
-    // Tentar obter o card do DB local
+    [cite_start]// Tentar obter o card do DB local [cite: 808]
     db.get("SELECT * FROM cards WHERE name = ?", [normalizedLanguageName], async (err, row) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
         if (row) {
-            // Card encontrado, retorna ele
+            [cite_start]// Card encontrado, retorna ele [cite: 809]
             console.log(`Card para '${normalizedLanguageName}' já existe no DB local. Nenhuma ação necessária para esta rota.`);
             return res.status(200).json({ message: "Card já existe no banco de dados local.", card: row });
         }
@@ -440,9 +440,9 @@ app.delete('/api/cards/:name', (req, res) => {
 });
 
 
-// Inicia o servidor
+[cite_start]// Inicia o servidor [cite: 348]
 app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-    console.log(`Para acessar o frontend principal, abra http://localhost:${PORT}/index.html no seu navegador.`);
-    console.log(`Para acessar a coleção, abra http://localhost:${PORT}/collection.html no seu navegador.`);
+    [cite_start]console.log(`Servidor rodando em http://localhost:${PORT}`); [cite: 349]
+    [cite_start]console.log(`Para acessar o frontend principal, abra http://localhost:${PORT}/index.html no seu navegador.`); [cite: 350]
+    [cite_start]console.log(`Para acessar a coleção, abra http://localhost:${PORT}/collection.html no seu navegador.`); [cite: 351]
 });
