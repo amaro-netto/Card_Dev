@@ -613,7 +613,11 @@ app.post('/api/admin/generate-bulk', async (req, res) => {
 });
 
 
-// NOVA ROTA: Rota para upload de CSV e geração em massa (com verificação de existência e atraso)
+// REMOVIDA: Rota para carregar linguagens de um JSON local e iniciar geração em massa - Não será mais usada
+// REMOVIDA: getLanguageNamesFromJson() - Não será mais usada
+
+
+// NOVA ROTA: Rota para upload de CSV e geração em massa
 app.post('/api/admin/upload-csv', async (req, res) => {
     const authHeader = req.headers['authorization'];
     if (!authHeader || authHeader !== `Bearer ${ADMIN_SECRET}`) {
