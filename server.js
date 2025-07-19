@@ -7,12 +7,18 @@ const path = require('path');
 const fs = require('fs'); // Módulo para manipulação de arquivos
 require('dotenv').config(); // Para carregar variáveis de ambiente do .env
 
+// Importa node-fetch apenas se a versão do Node.js for anterior à 18
+// Para Node.js 18+ você pode usar o fetch nativo, remova esta linha
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
+
 const app = express();
 const PORT = process.env.PORT || 3000; // Porta do servidor, ou 3000 por padrão
 
-// ATENÇÃO: Duas chaves de API agora!
+// ATENÇÃO: Duas chaves de API agora (Gemini e Replicate)!
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Para modelos de texto (Gemini)
-const GOOGLE_VISION_API_KEY = process.env.GOOGLE_VISION_API_KEY; // Para modelos de imagem (Imagen)
+
+const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN; // Para modelos de imagem (Replicate)
 
 // Verifica se as chaves da API estão configuradas
 if (!GEMINI_API_KEY) {
@@ -20,12 +26,12 @@ if (!GEMINI_API_KEY) {
     console.error('Por favor, certifique-se de que GEMINI_API_KEY=SUA_CHAVE_TEXTO_AQUI está no seu arquivo .env');
     process.exit(1);
 }
-if (!GOOGLE_VISION_API_KEY) {
-    console.error('ERRO: A variável de ambiente GOOGLE_VISION_API_KEY não está configurada no arquivo .env');
-    console.error('Por favor, certifique-se de que GOOGLE_VISION_API_KEY=SUA_CHAVE_IMAGEM_AQUI está no seu arquivo .env');
+
+if (!REPLICATE_API_TOKEN) {
+    console.error('ERRO: A variável de ambiente REPLICATE_API_TOKEN não está configurada no arquivo .env');
+    console.error('Por favor, certifique-se de que REPLICATE_API_TOKEN=SEU_TOKEN_DO_REPLICATE_AQUI está no seu arquivo .env');
     process.exit(1);
 }
-
 
 // Caminho para o banco de dados SQLite
 const DB_PATH = path.join(__dirname, 'data', 'cards.db');
@@ -45,6 +51,7 @@ if (!fs.existsSync(IMAGES_DIR)) {
 if (!fs.existsSync(ICONS_DIR)) {
     fs.mkdirSync(ICONS_DIR, { recursive: true });
 }
+
 
 // Inicializa o banco de dados SQLite
 const db = new sqlite3.Database(DB_PATH, (err) => {
@@ -85,6 +92,7 @@ app.use(express.static(__dirname));
 // Serve a pasta public/ para assets como imagens e ícones
 app.use('/public', express.static(path.join(__dirname, 'public'))); 
 
+
 // --- Funções para interagir com as APIs Gemini (no backend) ---
 
 /**
@@ -104,8 +112,9 @@ As estatísticas devem ser valores **entre 0 e 100** e devem refletir as caracte
 - CRV (Curva de Aprendizado): Facilidade ou dificuldade para iniciantes aprenderem e dominarem a linguagem.
 Além disso, forneça um prompt detalhado para gerar uma ilustração de personagem de anime no estilo Pokémon de 1ª geração para ${languageName}, com foco em suas características principais.
 O prompt da imagem deve especificar um aspecto retangular ligeiramente vertical (próximo de 1:1 ou 4:5) e cores que combinem com a linguagem (ex: laranjas e vermelhos para Java, roxos e laranjas para Kotlin).
-Defina 'isValidLanguage' como true se '${languageName}' for uma tecnologia de desenvolvimento, linguagem, framework, ferramenta, plataforma, ambiente ou conceito relevante na área de TI. Caso contrário, defina 'isValidLanguage' como false e os outros campos podem ser vazios ou padrão.`;
-    
+Defina 'isValidLanguage' como true se '${languageName}' for uma tecnologia de desenvolvimento, linguagem, framework, ferramenta, plataforma, ambiente ou conceito relevante na área de TI.
+Caso contrário, defina 'isValidLanguage' como false e os outros campos podem ser vazios ou padrão.`;
+
     chatHistory.push({ role: "user", parts: [{ text: prompt }] });
 
     const payload = {
@@ -197,44 +206,110 @@ Defina 'isValidLanguage' como true se '${languageName}' for uma tecnologia de de
 }
 
 /**
- * Chama a API Gemini para gerar uma imagem em Base64.
+ * Chama a API do Replicate para gerar uma imagem em Base64 usando Stable Diffusion.
  * @param {string} prompt - Prompt para a geração da imagem.
  * @returns {Promise<string|null>} Imagem Base64 (data URL) ou null em caso de erro.
  */
-async function generateImageFromGemini(prompt) {
-    // AQUI USAMOS A NOVA CHAVE DA API DE VISÃO!
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${GOOGLE_VISION_API_KEY}`; 
-    const payload = { instances: { prompt: prompt }, parameters: { "sampleCount": 1} };
+async function generateImageFromReplicate(prompt) { 
+    // ESTE É O ID DE VERSÃO QUE VOCÊ INDICOU PARA 'stability-ai/stable-diffusion'.
+    // SE PRECISAR DE SDXL, VOCÊ DEVE MUDAR O NOME DO MODELO TAMBÉM E O ID.
+    const model = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4"; 
 
-    console.log("DEBUG: Chamando API de Imagem com prompt:", prompt);
+    // A API do Replicate é uma API de inferência de modelos.
+    const apiUrl = `https://api.replicate.com/v1/predictions`;
+
+    const payload = {
+        version: model.split(':')[1], // O ID da versão do modelo
+        input: {
+            prompt: prompt,
+            // Adicione parâmetros de imagem que podem ser úteis para o Stable Diffusion
+            width: 512, // Tamanho da imagem, ajuste conforme necessário e limite do modelo
+            height: 640, // Proporção 4:5 (para 512x640)
+            num_outputs: 1, // Número de imagens a gerar
+            scheduler: "K_EULER", // Adicionado para consistência com o exemplo do curl
+        }
+    };
+
+    console.log("DEBUG: Chamando API do Replicate com prompt:", prompt);
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${REPLICATE_API_TOKEN}`, // ALTERADO PARA 'Bearer' AQUI
+                'Prefer': 'wait' // Adicionado cabeçalho Prefer: wait
+            },
             body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
             const errorBody = await response.text();
-            console.error(`ERRO API DE IMAGEM: ${response.status} ${response.statusText}`, errorBody);
+            console.error(`ERRO API DE IMAGEM REPLICATE (1): ${response.status} ${response.statusText}`, errorBody);
             return null;
         }
 
-        const result = await response.json();
-        console.log("DEBUG: Resposta completa da API de Imagem:", JSON.stringify(result, null, 2));
+        const initialResult = await response.json();
+        console.log("DEBUG: Resposta inicial do Replicate:", JSON.stringify(initialResult, null, 2));
 
-        if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
-            console.log("DEBUG: Imagem Base64 encontrada na resposta da API de Imagem.");
-            return `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+        // Replicate API retorna uma URL para checar o status da predição
+        // Precisamos "poll" essa URL até que a imagem esteja pronta ou haja um erro.
+        if (initialResult.urls && initialResult.urls.get) {
+            let imageUrl = null;
+            let status = initialResult.status;
+            let attempt = 0;
+            const maxAttempts = 30; // Aumentado o limite de tentativas para 30s (com delay de 1s)
+            const delay = 1000; // 1 segundo de atraso entre as tentativas
+
+            while (status === 'starting' || status === 'processing' || status === 'queued' && attempt < maxAttempts) {
+                await new Promise(res => setTimeout(res, delay));
+                const statusResponse = await fetch(initialResult.urls.get, {
+                    headers: { 'Authorization': `Bearer ${REPLICATE_API_TOKEN}` } // ALTERADO PARA 'Bearer' AQUI TAMBÉM
+                });
+
+                if (!statusResponse.ok) {
+                    const statusErrorBody = await statusResponse.text();
+                    console.error(`ERRO API DE IMAGEM REPLICATE (Status Check): ${statusResponse.status} ${statusResponse.statusText}`, statusErrorBody);
+                    return null;
+                }
+
+                const statusResult = await statusResponse.json();
+                status = statusResult.status;
+                console.log(`DEBUG: Replicate status: ${status} (Tentativa ${attempt + 1}/${maxAttempts})`);
+
+                if (status === 'succeeded' && statusResult.output && statusResult.output.length > 0) {
+                    imageUrl = statusResult.output[0]; // A URL da imagem gerada
+                    break;
+                } else if (status === 'failed' || status === 'canceled') {
+                    console.error(`ERRO: Geração de imagem no Replicate falhou ou foi cancelada. Detalhes:`, statusResult.error);
+                    return null;
+                }
+                attempt++;
+            }
+
+            if (imageUrl) {
+                console.log("DEBUG: Imagem gerada no Replicate. URL:", imageUrl);
+                // O Replicate retorna uma URL de imagem direta, não um Base64.
+                // Precisamos buscar essa imagem e convertê-la para Base64.
+                const imageResponse = await fetch(imageUrl);
+                const imageBuffer = await imageResponse.buffer(); // Obter a imagem como Buffer
+                const base64Data = imageBuffer.toString('base64');
+                return `data:image/png;base64,${base64Data}`;
+
+            } else {
+                console.error("ERRO: Não foi possível obter a URL da imagem do Replicate após várias tentativas ou status inesperado.");
+                return null;
+            }
+
         } else {
-            console.error("ERRO: Estrutura de resposta inesperada ou conteúdo de imagem Base64 ausente da API de Imagem.", result);
+            console.error("ERRO: Resposta inicial do Replicate não contém 'urls.get'.", initialResult);
             return null;
         }
     } catch (error) {
-        console.error("ERRO AO CHAMAR API IMAGEM (network/other):", error);
+        console.error("ERRO AO CHAMAR API REPLICATE (network/other):", error);
         return null;
     }
 }
+
 
 /**
  * Processa a atualização de um card específico (ou tenta gerá-lo se não existir).
@@ -252,17 +327,18 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
     if (!cardData || cardData.isValidLanguage === false) {
         return { success: false, error: `"${normalizedLanguageName}" não é uma tecnologia de desenvolvimento, linguagem, framework, ferramenta, plataforma, ambiente ou conceito relevante na área de TI reconhecível.`, isValidLanguage: false };
     }
-    
+
     cardData.name = normalizedLanguageName; // Garante que o nome final no cardData seja o normalizado
     let imageUrlToSave = `/public/images/placeholder.png`; // Fallback para imagem
     const imageFileName = `${normalizedLanguageName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`; // Nome de arquivo seguro
     const imageFilePath = path.join(IMAGES_DIR, imageFileName);
 
-    // 2. Gerar imagem via Gemini (Base64) ou usar existente se não for forçado
+    // 2. Gerar imagem via Replicate (Base64) ou usar existente se não for forçado
     let generatedBase64ImageUrl = null;
     if (forceImageRegeneration || !fs.existsSync(imageFilePath)) {
-        console.log(`INFO: Iniciando geração/regeneration de imagem para '${normalizedLanguageName}'...`);
-        generatedBase64ImageUrl = await generateImageFromGemini(cardData.imagePrompt);
+        console.log(`INFO: Iniciando geração/regeneration de imagem para '${normalizedLanguageName}' via Replicate...`);
+        // Mude esta linha para chamar a nova função
+        generatedBase64ImageUrl = await generateImageFromReplicate(cardData.imagePrompt); 
     } else {
         console.log(`INFO: Imagem para '${normalizedLanguageName}' já existe e regeração não forçada. Usando a imagem existente.`);
         imageUrlToSave = `/public/images/${imageFileName}`; // Usa a URL existente
@@ -272,7 +348,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
     if (generatedBase64ImageUrl) {
         // 3. Salvar imagem localmente no diretório public/images
         const base64Data = generatedBase64ImageUrl.replace(/^data:image\/\w+;base64,/, "");
-        
+
         try {
             fs.writeFileSync(imageFilePath, base64Data, 'base64');
             imageUrlToSave = `/public/images/${imageFileName}`; // URL acessível pelo frontend
@@ -298,6 +374,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
         console.log(`INFO: Ícone local para '${normalizedLanguageName}' não encontrado. O frontend usará um SVG default.`);
     }
 
+
     // 5. Salvar/Atualizar o card no banco de dados SQLite
     return new Promise((resolve, reject) => {
         // REPLACE INTO: Insere se não existe, atualiza se existe (baseado na PRIMARY KEY 'name')
@@ -312,8 +389,8 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
             cardData.stats.com,
             cardData.stats.crv,
             cardData.imagePrompt,
-            imageUrlToSave, // URL da imagem salva no Storage local
-            iconUrlToSave, // URL do ícone local
+            imageUrlToSave,
+            iconUrlToSave,
             cardData.isValidLanguage ? 1 : 0, // SQLite não tem booleano nativo, usa 0 ou 1
             function(insertErr) {
                 if (insertErr) {
@@ -399,6 +476,7 @@ app.post('/api/cards/update', async (req, res) => {
         console.log(`INFO: Solicitação para atualizar card: ${languageName}`);
         try {
             const result = await processCardUpdate(languageName, true); // Força regeneração de imagem
+
             if (result.success) {
                 res.status(200).json({ message: result.message, card: result.card });
             } else {
@@ -417,21 +495,22 @@ app.post('/api/cards/update', async (req, res) => {
             }
 
             const updatePromises = rows.map(row => processCardUpdate(row.name, true)); // Força regerar imagem para todos
-            
+
             try {
                 // Use Promise.allSettled para que todas as promessas sejam executadas,
                 // mesmo que algumas falhem, e você possa ver os resultados de todas.
                 const results = await Promise.allSettled(updatePromises);
+
                 const successfulUpdates = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value.card.name);
                 const failedUpdates = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success));
 
                 console.log(`INFO: Atualização em massa concluída. Sucessos: ${successfulUpdates.length}, Falhas: ${failedUpdates.length}`);
 
-                res.status(200).json({ 
+                res.status(200).json({
                     message: `Processo de atualização em massa concluído. ${successfulUpdates.length} cards atualizados.`,
                     successful: successfulUpdates,
                     // Mapeia os motivos das falhas de forma mais clara
-                    failed: failedUpdates.map(r => r.status === 'rejected' ? r.reason.message || r.reason : r.value.error) 
+                    failed: failedUpdates.map(r => r.status === 'rejected' ? r.reason.message || r.reason : r.value.error)
                 });
             } catch (error) {
                 console.error("ERRO: Erro no processamento em massa de cards:", error);
