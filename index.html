@@ -4,410 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coleção de Cards de Linguagens</title>
-    <!-- Inclui o Tailwind CSS para estilização rápida e responsiva -->
+    <!-- Inclui o Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: "Inter", sans-serif;
-            background-color: #f0f2f5;
-            display: flex; /* Habilita o Flexbox */
-            flex-direction: column; /* Organiza os itens em coluna */
-            min-height: 100vh; /* Garante que o body ocupe no mínimo 100% da altura da viewport */
-            margin: 0;
-            padding: 0; /* Removido padding do body, será adicionado nos elementos internos */
-            box-sizing: border-box;
-            overflow-y: hidden; /* Impede a rolagem do body principal */
-        }
-        .header-section {
-            width: 100%;
-            max-width: 1200px; /* Aumentei a largura máxima para acomodar o layout lado a lado */
-            margin: 20px auto 20px auto; /* Centraliza e adiciona margem */
-            background-color: #ffffff;
-            padding: 10px 20px; /* Padding reduzido para um cabeçalho menor */
-            border-radius: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Sombra mais discreta */
-            flex-shrink: 0; /* Impede que o cabeçalho encolha */
-            display: flex; /* Habilita Flexbox para alinhar info e busca */
-            justify-content: space-between; /* Espaça os itens para os cantos */
-            align-items: center; /* Alinha verticalmente no centro */
-            flex-wrap: wrap; /* Permite quebra de linha em telas pequenas */
-        }
-        .header-info {
-            text-align: left; /* Alinha o texto à esquerda */
-            flex-grow: 1; /* Permite que o info ocupe o espaço disponível */
-            padding-right: 15px; /* Espaçamento entre info e busca */
-            min-width: 250px; /* Garante que o info não fique muito pequeno */
-        }
-        .header-info h1 {
-            font-size: 1.6rem; /* Tamanho da fonte ainda mais reduzido */
-            font-weight: 600; 
-            color: #334155; 
-            margin-bottom: 5px; /* Margem reduzida */
-        }
-        .header-info p {
-            font-size: 0.8rem; /* Tamanho da fonte reduzido */
-            color: #64748b;
-            margin-bottom: 0;
-        }
-
-        .search-and-message-container {
-            display: flex;
-            flex-direction: column; /* Organiza busca e mensagem em coluna */
-            align-items: flex-end; /* Alinha à direita */
-            flex-shrink: 0; /* Impede que este contêiner encolha */
-            min-width: 280px; /* Garante que a busca não fique muito pequena */
-        }
-        .search-container {
-            display: flex;
-            gap: 10px;
-            margin-top: 0; /* Remove margem superior */
-            justify-content: flex-end; /* Alinha a busca à direita */
-            width: 100%; /* Ocupa a largura total do seu contêiner pai */
-        }
-        .search-container input {
-            padding: 8px 12px; /* Padding reduzido */
-            border: 2px solid #7F52FF;
-            border-radius: 8px; /* Borda mais suave */
-            font-size: 0.9rem; /* Fonte menor */
-            flex-grow: 1;
-            max-width: 250px; /* Ajuste para caber melhor */
-        }
-        .search-container button {
-            background-color: #7F52FF;
-            color: white;
-            padding: 8px 15px; /* Padding reduzido */
-            border-radius: 8px; /* Borda mais suave */
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.15); /* Sombra mais discreta */
-        }
-        .search-container button:hover {
-            background-color: #6330CC;
-        }
-        .message-area {
-            margin-top: 8px; /* Margem reduzida */
-            font-size: 0.8rem; /* Fonte menor */
-            color: #334155;
-            min-height: 18px; /* Garante espaço para mensagens */
-            text-align: right; /* Alinha a mensagem à direita */
-            width: 100%;
-        }
-
-        /* Área principal de conteúdo que irá rolar se necessário */
-        .main-content-area {
-            flex-grow: 1; /* Ocupa todo o espaço restante */
-            overflow-y: auto; /* Adiciona barra de rolagem se o conteúdo exceder */
-            width: 100%;
-            display: flex; /* Para centralizar os cards dentro */
-            justify-content: center;
-            padding: 20px 0; /* Padding superior e inferior */
-        }
-
-        .cards-grid {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 24px; /* Espaço entre os cartões */
-            width: 100%;
-            max-width: 1200px; /* Largura máxima para a grade de cartões */
-            min-height: 150px; /* Garante que a grade tenha uma altura mínima mesmo vazia */
-            align-content: flex-start; /* Alinha os itens ao topo quando há espaço extra */
-        }
-        .cards-grid > p { /* Estilo para a mensagem de "Carregando cards..." */
-            width: 100%;
-            text-align: center;
-            margin-top: 50px;
-        }
-        /* Estilos base para o contêiner do cartão individual */
-        .card-container {
-            background-color: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
-            width: 100%;
-            max-width: 300px; /* Largura base para cada card na coleção */
-            height: 480px; /* Altura para proporção 5:8 (300 * 8/5) */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            /* A cor da borda será definida dinamicamente usando a variável CSS */
-            border: 3px solid var(--card-border-main); 
-            flex-shrink: 0;
-        }
-        .card-header {
-            width: 100%;
-            height: 40px; /* Altura ajustada para cards menores */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0px 0px 0px 10px; /* Padding ajustado */
-            background: linear-gradient(to right, var(--card-gradient-start), var(--card-gradient-end));
-            border-bottom: 2px solid var(--card-border-dark);
-            color: #ffffff;
-            font-size: 1rem;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            flex-shrink: 0;
-        }
-        .card-name-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 4px; /* Espaço ajustado */
-        }
-        .card-logo-svg { /* Estilo genérico para o SVG da logo */
-            width: 20px; /* Tamanho ajustado */
-            height: 20px; /* Tamanho ajustado */
-            fill: #ffffff;
-        }
-        .card-name {
-            font-size: 1.4rem; /* Tamanho inicial/máximo para ajuste */
-            font-weight: bold;
-            color: #ffffff;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
-            letter-spacing: 0.5px;
-            white-space: nowrap; /* Impede quebra de linha inicialmente */
-            overflow: hidden; /* Esconde o overflow */
-            text-overflow: ellipsis; /* Adiciona reticências */
-        }
-        .card-type {
-            height: 100%;
-            width: 45%; /* Largura ajustada */
-            color: var(--card-text-color);
-            padding: 2px 6px; /* Padding ajustado */
-            border-radius: 0px 8px 0px 0px; /* Raio ajustado */
-            font-weight: bold;
-            font-size: 0.8rem; /* Tamanho inicial/máximo para ajuste */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            flex-shrink: 0;
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            white-space: nowrap; /* Impede quebra de linha inicialmente */
-            text-overflow: ellipsis; /* Adiciona reticências */
-        }
-        .card-type::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--card-bg-light); /* Cor de fundo do pseudo-elemento */
-            transform: skewX(10deg);
-            transform-origin: top right;
-            z-index: -1;
-        }
-        .card-image-wrapper {
-            width: 100%;
-            height: 300px; /* Altura fixa da imagem */
-            overflow: hidden;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #e2e8f0;
-            flex-grow: 1;
-        }
-        .card-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .card-description {
-            font-size: 0.85rem; /* Tamanho inicial/máximo para ajuste */
-            color: #4b5563;
-            text-align: center;
-            padding: 5px 8px; /* Padding ajustado */
-            text-align: justify;
-            line-height: 1.2;
-            border-top: 1px solid var(--card-bg-light);
-            background-color: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-            flex-shrink: 0;
-            height: 60px; /* Altura fixa para a descrição */
-            overflow: hidden; /* Esconde o overflow */
-        }
-        .card-stats {
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0px 8px 20px 8px; /* Padding ajustado */
-            background-color: var(--card-bg-light);
-            border-top: 1px solid var(--card-border-light);
-            flex-wrap: nowrap;
-            height: auto; /* A altura se ajusta ao conteúdo, que é fixo */
-            flex-shrink: 0;
-        }
-        .stat-item {
-            display: flex;
-            align-items: center;
-            padding: 4px; /* Padding ajustado */
-            font-weight: bold;
-            color: var(--card-text-color);
-            flex-shrink: 0;
-        }
-        .stat-label {
-            font-size: 0.7rem; /* Tamanho ajustado */
-            color: #334155;
-            margin-bottom: 1px;
-            text-transform: uppercase;
-            letter-spacing: 0.1px;
-        }
-        .stat-value {
-            font-size: 0.8rem; /* Tamanho ajustado */
-            color: var(--card-value-color);
-        }
-        .card-footer {
-            width: 100%;
-            padding: 6px 10px; /* Padding ajustado */
-            background-color: var(--card-gradient-start);
-            color: #ffffff;
-            font-size: 0.5rem; /* Tamanho ajustado */
-            text-align: right;
-            border-bottom-left-radius: 12px;
-            border-bottom-right-radius: 12px;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            flex-shrink: 0;
-        }
-
-        /* Rodapé de explicação das estatísticas - ESTILOS MAIS DISCRETOS */
-        .footer-section {
-            width: 100%;
-            max-width: 1200px; /* Largura igual ao cabeçalho */
-            margin: 20px auto 0 auto; /* Centraliza e adiciona margem superior */
-            padding: 10px 15px; /* Padding reduzido */
-            background-color: #f8fafc; /* Fundo mais suave */
-            border-radius: 10px; /* Borda mais suave */
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05); /* Sombra mais discreta */
-            text-align: left; /* Alinha o conteúdo à esquerda */
-            border: 1px solid #e2e8f0; /* Borda fina e suave */
-            flex-shrink: 0; /* Impede que o rodapé encolha */
-        }
-        .footer-section h2 {
-            font-size: 0.9rem; /* Título menor */
-            font-weight: normal; /* Menos negrito */
-            color: #64748b; /* Cor mais suave */
-            margin-bottom: 8px; /* Margem reduzida */
-            text-align: left; /* Alinha o título à esquerda */
-        }
-        .footer-section ul {
-            list-style: none; /* Remove marcadores de lista padrão */
-            padding: 0;
-            margin: 0;
-            display: flex; /* Habilita flexbox para as colunas */
-            flex-wrap: wrap; /* Permite quebra de linha para colunas em telas pequenas */
-            justify-content: space-between; /* Espaça as colunas */
-        }
-        .footer-section li {
-            margin-bottom: 5px; /* Margem reduzida */
-            font-size: 0.7rem; /* Fonte menor */
-            color: #94a3b8; /* Cor mais suave ainda */
-            line-height: 1.3;
-            width: 48%; /* Ocupa quase metade da largura para 2 colunas */
-            box-sizing: border-box; /* Inclui padding/border na largura */
-            padding-right: 10px; /* Espaçamento entre as colunas */
-        }
-        .footer-section li:nth-child(odd) { /* Para alinhar a primeira coluna à esquerda */
-            text-align: left;
-        }
-        .footer-section li:nth-child(even) { /* Para alinhar a segunda coluna à esquerda */
-            text-align: left;
-        }
-        .footer-section li strong {
-            color: #64748b; /* Cor mais suave */
-            font-size: 0.75rem; /* Fonte menor */
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .header-section {
-                flex-direction: column; /* Empilha os itens em telas pequenas */
-                align-items: center;
-                padding: 15px;
-            }
-            .header-info {
-                text-align: center; /* Centraliza o texto em telas pequenas */
-                padding-right: 0;
-                margin-bottom: 15px; /* Espaçamento entre info e busca */
-            }
-            .header-info h1 {
-                font-size: 1.4rem;
-            }
-            .header-info p {
-                font-size: 0.75rem;
-            }
-            .search-and-message-container {
-                width: 100%; /* Ocupa a largura total em telas pequenas */
-                align-items: center; /* Centraliza a busca e mensagem */
-            }
-            .search-container {
-                justify-content: center; /* Centraliza a busca */
-            }
-            .search-container input, .search-container button {
-                width: 90%;
-                max-width: 350px;
-            }
-            .message-area {
-                text-align: center; /* Centraliza a mensagem */
-            }
-            .cards-grid {
-                padding: 10px 0;
-                gap: 16px;
-                min-height: 100px; /* Ajuste para telas menores */
-            }
-            .card-container {
-                max-width: 280px;
-                height: 450px;
-            }
-            .card-name {
-                font-size: 1.2rem;
-            }
-            .card-type {
-                font-size: 0.7rem;
-            }
-            .card-image-wrapper {
-                height: 260px;
-            }
-            .card-description {
-                font-size: 0.75rem;
-            }
-            .stat-label {
-                font-size: 0.65rem;
-            }
-            .stat-value {
-                font-size: 0.9rem;
-            }
-            .card-footer {
-                font-size: 0.6rem;
-            }
-            .footer-section {
-                margin-top: 15px;
-                padding: 10px 15px;
-            }
-            .footer-section h2 {
-                font-size: 0.8rem;
-                text-align: center; /* Centraliza o título em telas pequenas */
-            }
-            .footer-section ul {
-                flex-direction: column; /* Empilha as colunas em telas muito pequenas */
-            }
-            .footer-section li {
-                width: 100%; /* Ocupa a largura total em telas muito pequenas */
-                padding-right: 0;
-                text-align: center !important; /* Centraliza o texto em telas muito pequenas */
-            }
-        }
-    </style>
+    <!-- Link para o arquivo CSS separado -->
+    <link rel="stylesheet" href="/public/styles.css">
 </head>
 <body>
     <div class="header-section">
@@ -720,38 +320,18 @@
                 cardDiv.style.setProperty(prop, value);
             }
 
-            // --- INÍCIO DA MUDANÇA: USANDO ÍCONES LOCAIS E FALLBACK ---
+            // --- INÍCIO DA MUDANÇA: USANDO ÍCONES LOCAIS E FALLBACK SIMPLIFICADO ---
             let iconHtmlContent = '';
             // Tenta usar a URL do ícone fornecida pelo backend (se existir)
             if (cardData.iconUrl) {
                 // Se o backend retornou uma URL de ícone local, a usamos
                 iconHtmlContent = `<img class="card-logo-svg" src="${API_BASE_URL}${cardData.iconUrl}" alt="${cardData.name} Icon">`;
             } else {
-                // Se não houver iconUrl do backend, usa SVG inline com fallback
-                let logoSvgPath = '';
-                switch (cardData.name.toLowerCase()) {
-                    case 'java': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>'; break;
-                    case 'kotlin': logoSvgPath = '<path d="M24 24H0V0h24L12 12z"/>'; break;
-                    case 'python': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12c0 2.21 1.79 4 4 4h4c2.21 0 4-1.79 4-4V8c0-2.21-1.79-4-4-4H8C5.373 4 0 9.373 0 16s5.373 8 12 8 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>'; break;
-                    case 'javascript': logoSvgPath = '<path d="M0 0h24v24H0z" fill="none"/><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>'; break;
-                    case 'php': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>'; break;
-                    case 'node.js': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    case 'html': logoSvgPath = '<path d="M1.5 0L0 1.5l12 12L24 1.5 22.5 0 12 10.5zM0 22.5L1.5 24l10.5-10.5L22.5 24 24 22.5 12 10.5z"/>'; break;
-                    case 'css': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    case 'c#': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    case 'c++': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    case 'ruby': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    case 'go': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    case 'swift': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    case 'typescript': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    case 'react': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    case 'angular': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    case 'vue.js': logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-4 17h2v-8H8v8zm4 0h2V7h-2v10z"/>'; break;
-                    default: logoSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>'; break;
-                }
-                iconHtmlContent = `<svg class="card-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>${cardData.name}</title>${logoSvgPath}</svg>`;
+                // Se não houver iconUrl do backend, usa SVG de círculo genérico
+                const defaultSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>'; // Círculo genérico
+                iconHtmlContent = `<svg class="card-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>${cardData.name}</title>${defaultSvgPath}</svg>`;
             }
-            // --- FIM DA MUDANÇA: USANDO ÍCONES LOCAIS ---
+            // --- FIM DA MUDANÇA: USANDO ÍCONES LOCAIS E FALLBACK SIMPLIFICADO ---
 
             cardDiv.innerHTML = `
                 <div class="card-header">
@@ -762,7 +342,7 @@
                     <div class="card-type" data-max-font="0.8" data-min-font="0.6">${cardData.type}</div>
                 </div>
                 <div class="card-image-wrapper">
-                    <img class="card-image" src="${cardData.imageUrl || '/public/images/placeholder.png'}" 
+                    <img class="card-image" src="${cardData.imageUrl || API_BASE_URL + '/public/images/placeholder.png'}" 
                          alt="Ilustração do ${cardData.name} como um Personagem Anime">
                 </div>
                 <div class="card-description" data-max-font="0.85" data-min-font="0.6" data-max-lines="4">
@@ -771,23 +351,23 @@
                 <div class="card-stats">
                     <div class="stat-item">
                         <span class="stat-label">PWR/</span>
-                        <span class="stat-value">${cardData.stats && cardData.stats.pwr !== undefined ? cardData.stats.pwr : '--'}</span>
+                        <span class="stat-value">${cardData.pwr !== undefined ? cardData.pwr : '--'}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">| VEL/</span>
-                        <span class="stat-value">${cardData.stats && cardData.stats.vel !== undefined ? cardData.stats.vel : '--'}</span>
+                        <span class="stat-value">${cardData.vel !== undefined ? cardData.vel : '--'}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">| FLX/</span>
-                        <span class="stat-value">${cardData.stats && cardData.stats.flx !== undefined ? cardData.stats.flx : '--'}</span>
+                        <span class="stat-value">${cardData.flx !== undefined ? cardData.flx : '--'}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">| COM/</span>
-                        <span class="stat-value">${cardData.stats && cardData.stats.com !== undefined ? cardData.stats.com : '--'}</span>
+                        <span class="stat-value">${cardData.com !== undefined ? cardData.com : '--'}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">| CRV/</span>
-                        <span class="stat-value">${cardData.stats && cardData.stats.crv !== undefined ? cardData.stats.crv : '--'}</span>
+                        <span class="stat-value">${cardData.crv !== undefined ? cardData.crv : '--'}</span>
                     </div>
                 </div>
                 <div class="card-footer">
