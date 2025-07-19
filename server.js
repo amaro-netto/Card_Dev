@@ -9,14 +9,23 @@ require('dotenv').config(); // Para carregar variáveis de ambiente do .env
 
 const app = express();
 const PORT = process.env.PORT || 3000; // Porta do servidor, ou 3000 por padrão
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Sua chave da API Gemini
 
-// Verifica se a chave da API está configurada
+// ATENÇÃO: Duas chaves de API agora!
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Para modelos de texto (Gemini)
+const GOOGLE_VISION_API_KEY = process.env.GOOGLE_VISION_API_KEY; // Para modelos de imagem (Imagen)
+
+// Verifica se as chaves da API estão configuradas
 if (!GEMINI_API_KEY) {
     console.error('ERRO: A variável de ambiente GEMINI_API_KEY não está configurada no arquivo .env');
-    console.error('Por favor, crie um arquivo .env na raiz do projeto com GEMINI_API_KEY=SUA_CHAVE_AQUI');
-    process.exit(1); // Encerra o processo se a chave não estiver presente
+    console.error('Por favor, certifique-se de que GEMINI_API_KEY=SUA_CHAVE_TEXTO_AQUI está no seu arquivo .env');
+    process.exit(1);
 }
+if (!GOOGLE_VISION_API_KEY) {
+    console.error('ERRO: A variável de ambiente GOOGLE_VISION_API_KEY não está configurada no arquivo .env');
+    console.error('Por favor, certifique-se de que GOOGLE_VISION_API_KEY=SUA_CHAVE_IMAGEM_AQUI está no seu arquivo .env');
+    process.exit(1);
+}
+
 
 // Caminho para o banco de dados SQLite
 const DB_PATH = path.join(__dirname, 'data', 'cards.db');
@@ -76,7 +85,7 @@ app.use(express.static(__dirname));
 // Serve a pasta public/ para assets como imagens e ícones
 app.use('/public', express.static(path.join(__dirname, 'public'))); 
 
-// --- Funções para interagir com a API Gemini (no backend) ---
+// --- Funções para interagir com as APIs Gemini (no backend) ---
 
 /**
  * Chama a API Gemini para gerar dados de texto para um card.
@@ -86,7 +95,7 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 async function getCardDataFromGemini(languageName) {
     const chatHistory = [];
     const prompt = `Gere dados para um cartão de jogo de linguagem de programação, no estilo de um jogo de cartas de fantasia, para a linguagem ${languageName}.
-Inclua o nome, um tipo (escolha entre: "Linguagem", "Framework", "Biblioteca", "Banco de Dados", "API & Plataforma", "Marcação/Estilo", "Containerization", "Mobile" ou "Outros" - selecione o que melhor se encaixa no contexto. Ferramentas, ambientes de desenvolvimento e plataformas devem ser categorizados como "API & Plataforma".), uma descrição concisa em português (máximo 30 palavras), estatísticas de poder (PWR), velocidade (VEL), flexibilidade (FLX), comunidade (COM) e curva de aprendizado (CRV).
+Inclua o nome, um tipo (escolha entre: "Linguagem", "Framework", "Biblioteca", "Banco de Dados", "API & Plataforma", "Marcação/Estilo", "Containerization", "Mobile" ou "Outros" - selecione o que melhor se encaixa no contexto. Ferramentas, ambientes de desenvolvimento e plataformas devem ser categorizadas como "API & Plataforma".), uma descrição concisa em português (máximo 30 palavras), estatísticas de poder (PWR), velocidade (VEL), flexibilidade (FLX), comunidade (COM) e curva de aprendizado (CRV).
 As estatísticas devem ser valores **entre 0 e 100** e devem refletir as características reais da linguagem:
 - PWR (Poder): Capacidade da linguagem para lidar com tarefas complexas e de alta demanda.
 - VEL (Velocidade): Desempenho em tempo de execução e eficiência.
@@ -128,7 +137,7 @@ Defina 'isValidLanguage' como true se '${languageName}' for uma tecnologia de de
         }
     };
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`; // USANDO GEMINI_API_KEY AQUI
 
     try {
         const response = await fetch(apiUrl, {
@@ -139,7 +148,7 @@ Defina 'isValidLanguage' como true se '${languageName}' for uma tecnologia de de
 
         if (!response.ok) {
             const errorBody = await response.text();
-            console.error(`Erro na requisição da API de Texto Gemini: ${response.status} ${response.statusText}`, errorBody);
+            console.error(`ERRO API DE TEXTO GEMINI: ${response.status} ${response.statusText}`, errorBody);
             return null;
         }
 
@@ -193,9 +202,11 @@ Defina 'isValidLanguage' como true se '${languageName}' for uma tecnologia de de
  * @returns {Promise<string|null>} Imagem Base64 (data URL) ou null em caso de erro.
  */
 async function generateImageFromGemini(prompt) {
+    // AQUI USAMOS A NOVA CHAVE DA API DE VISÃO!
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${GOOGLE_VISION_API_KEY}`; 
     const payload = { instances: { prompt: prompt }, parameters: { "sampleCount": 1} };
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${GEMINI_API_KEY}`;
 
+    console.log("DEBUG: Chamando API de Imagem com prompt:", prompt);
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -205,20 +216,22 @@ async function generateImageFromGemini(prompt) {
 
         if (!response.ok) {
             const errorBody = await response.text();
-            console.error(`Erro na requisição da API de Imagem Gemini: ${response.status} ${response.statusText}`, errorBody);
+            console.error(`ERRO API DE IMAGEM: ${response.status} ${response.statusText}`, errorBody);
             return null;
         }
 
         const result = await response.json();
+        console.log("DEBUG: Resposta completa da API de Imagem:", JSON.stringify(result, null, 2));
 
         if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+            console.log("DEBUG: Imagem Base64 encontrada na resposta da API de Imagem.");
             return `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
         } else {
-            console.error("Estrutura de resposta inesperada ou conteúdo de imagem ausente da API de Imagem.", result);
+            console.error("ERRO: Estrutura de resposta inesperada ou conteúdo de imagem Base64 ausente da API de Imagem.", result);
             return null;
         }
     } catch (error) {
-        console.error("Erro ao chamar a API Gemini para gerar imagem:", error);
+        console.error("ERRO AO CHAMAR API IMAGEM (network/other):", error);
         return null;
     }
 }
@@ -248,10 +261,10 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
     // 2. Gerar imagem via Gemini (Base64) ou usar existente se não for forçado
     let generatedBase64ImageUrl = null;
     if (forceImageRegeneration || !fs.existsSync(imageFilePath)) {
-        console.log(`Gerando imagem para '${normalizedLanguageName}' via Gemini...`);
+        console.log(`INFO: Iniciando geração/regeneration de imagem para '${normalizedLanguageName}'...`);
         generatedBase64ImageUrl = await generateImageFromGemini(cardData.imagePrompt);
     } else {
-        console.log(`Imagem para '${normalizedLanguageName}' já existe. Não regerando.`);
+        console.log(`INFO: Imagem para '${normalizedLanguageName}' já existe e regeração não forçada. Usando a imagem existente.`);
         imageUrlToSave = `/public/images/${imageFileName}`; // Usa a URL existente
     }
 
@@ -263,13 +276,13 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
         try {
             fs.writeFileSync(imageFilePath, base64Data, 'base64');
             imageUrlToSave = `/public/images/${imageFileName}`; // URL acessível pelo frontend
-            console.log(`Imagem salva localmente: ${imageUrlToSave}`);
+            console.log(`SUCESSO: Imagem salva localmente: ${imageUrlToSave}`);
         } catch (fileError) {
-            console.error("Erro ao salvar imagem localmente:", fileError);
+            console.error("ERRO: Erro ao salvar imagem localmente:", fileError);
             // Mantém o fallback se o salvamento falhar
         }
     } else if (forceImageRegeneration && !fs.existsSync(imageFilePath)) { // Se a regeração foi forçada mas falhou
-        console.warn(`Não foi possível regerar imagem para '${normalizedLanguageName}'. Usando placeholder.`);
+        console.warn(`AVISO: Não foi possível regerar imagem para '${normalizedLanguageName}'. Usando placeholder.`);
     }
 
 
@@ -280,9 +293,9 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
 
     if (fs.existsSync(iconFilePath)) {
         iconUrlToSave = `/public/icons/${iconFileName}`;
-        console.log(`Ícone local encontrado: ${iconUrlToSave}`);
+        console.log(`INFO: Ícone local encontrado: ${iconUrlToSave}`);
     } else {
-        console.log(`Ícone local para '${normalizedLanguageName}' não encontrado. O frontend usará um SVG default.`);
+        console.log(`INFO: Ícone local para '${normalizedLanguageName}' não encontrado. O frontend usará um SVG default.`);
     }
 
     // 5. Salvar/Atualizar o card no banco de dados SQLite
@@ -304,7 +317,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
             cardData.isValidLanguage ? 1 : 0, // SQLite não tem booleano nativo, usa 0 ou 1
             function(insertErr) {
                 if (insertErr) {
-                    console.error('Erro ao inserir/atualizar card no DB:', insertErr.message);
+                    console.error('ERRO DB: Erro ao inserir/atualizar card no DB:', insertErr.message);
                     return reject({ success: false, error: insertErr.message });
                 }
                 const processedCard = {
@@ -321,6 +334,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
                     iconUrl: iconUrlToSave, // Inclui a URL do ícone no retorno
                     isValidLanguage: cardData.isValidLanguage
                 };
+                console.log(`SUCESSO: Card para '${normalizedLanguageName}' processado e salvo no DB.`);
                 resolve({ success: true, card: processedCard, message: `Card para '${normalizedLanguageName}' processado com sucesso!` });
             }
         );
@@ -359,12 +373,12 @@ app.post('/api/cards', async (req, res) => {
         }
         if (row) {
             // Card encontrado, retorna ele
-            console.log(`Card para '${normalizedLanguageName}' já existe no DB local. Nenhuma ação necessária para esta rota.`);
+            console.log(`INFO: Card para '${normalizedLanguageName}' já existe no DB local. Nenhuma ação necessária para esta rota.`);
             return res.status(200).json({ message: "Card já existe no banco de dados local.", card: row });
         }
 
         // Se não encontrado, processa e insere
-        console.log(`Gerando dados e imagem para novo card '${normalizedLanguageName}' via Gemini...`);
+        console.log(`INFO: Gerando dados e imagem para novo card '${normalizedLanguageName}' via Gemini...`);
         const result = await processCardUpdate(normalizedLanguageName, true); // Força regeneração da imagem para novos cards
 
         if (result.success) {
@@ -382,7 +396,7 @@ app.post('/api/cards/update', async (req, res) => {
 
     if (languageName) {
         // Atualizar um card específico
-        console.log(`Solicitação para atualizar card: ${languageName}`);
+        console.log(`INFO: Solicitação para atualizar card: ${languageName}`);
         try {
             const result = await processCardUpdate(languageName, true); // Força regeneração de imagem
             if (result.success) {
@@ -391,12 +405,12 @@ app.post('/api/cards/update', async (req, res) => {
                 res.status(400).json({ error: result.error, isValidLanguage: result.isValidLanguage });
             }
         } catch (error) {
-            console.error(`Erro ao atualizar card ${languageName}:`, error);
+            console.error(`ERRO: Erro ao atualizar card ${languageName}:`, error);
             res.status(500).json({ error: `Erro interno ao atualizar card ${languageName}.` });
         }
     } else {
         // Atualizar todos os cards
-        console.log('Solicitação para atualizar TODOS os cards.');
+        console.log('INFO: Solicitação para atualizar TODOS os cards.');
         db.all("SELECT name FROM cards", [], async (err, rows) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
@@ -405,19 +419,22 @@ app.post('/api/cards/update', async (req, res) => {
             const updatePromises = rows.map(row => processCardUpdate(row.name, true)); // Força regerar imagem para todos
             
             try {
+                // Use Promise.allSettled para que todas as promessas sejam executadas,
+                // mesmo que algumas falhem, e você possa ver os resultados de todas.
                 const results = await Promise.allSettled(updatePromises);
                 const successfulUpdates = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value.card.name);
-                const failedUpdates = results.filter(r => r.status === 'rejected' || !r.value.success);
+                const failedUpdates = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success));
 
-                console.log(`Atualização em massa concluída. Sucessos: ${successfulUpdates.length}, Falhas: ${failedUpdates.length}`);
+                console.log(`INFO: Atualização em massa concluída. Sucessos: ${successfulUpdates.length}, Falhas: ${failedUpdates.length}`);
 
                 res.status(200).json({ 
                     message: `Processo de atualização em massa concluído. ${successfulUpdates.length} cards atualizados.`,
                     successful: successfulUpdates,
-                    failed: failedUpdates.map(r => r.status === 'rejected' ? r.reason : r.value.error)
+                    // Mapeia os motivos das falhas de forma mais clara
+                    failed: failedUpdates.map(r => r.status === 'rejected' ? r.reason.message || r.reason : r.value.error) 
                 });
             } catch (error) {
-                console.error("Erro no processamento em massa de cards:", error);
+                console.error("ERRO: Erro no processamento em massa de cards:", error);
                 res.status(500).json({ error: "Erro interno ao atualizar todos os cards." });
             }
         });

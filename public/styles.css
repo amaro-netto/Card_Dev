@@ -117,11 +117,11 @@ body {
     overflow: hidden;
     width: 100%;
     max-width: 300px;
-    height: 480px;
+    height: 480px; /* Altura fixa do card */
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Organiza os elementos internos em coluna */
     align-items: center;
-    position: relative;
+    position: relative; /* Para o footer, que será absolute em relação a este */
     border: 3px solid var(--card-border-main);
     flex-shrink: 0;
 }
@@ -230,42 +230,48 @@ body {
 .card-stats {
     width: 100%;
     display: flex;
-    justify-content: space-around; /* Distribui o espaço igualmente */
+    justify-content: space-around;
     align-items: center;
-    padding: 5px 4px; /* Reduz padding para economizar espaço */
+    padding: 5px; /* Padding de 5px */
     background-color: var(--card-bg-light);
     border-top: 1px solid var(--card-border-light);
-    flex-wrap: nowrap; /* Garante que os stats fiquem na mesma linha */
+    flex-wrap: nowrap;
     height: auto;
     flex-shrink: 0;
+    min-height: 25px;
 }
 .stat-item {
     display: flex;
-    flex-direction: column; /* Alinha label e value verticalmente */
-    align-items: center;
-    padding: 0 2px; /* Reduz padding interno do item */
+    flex-direction: row; /* Coloca label e value lado a lado */
+    justify-content: center; /* Centraliza o conjunto label+value */
+    align-items: baseline; /* Alinha pela base do texto */
+    padding: 0 2px;
     font-weight: bold;
-    color: var(--card-text-color);
-    flex: 1; /* Permite que os itens cresçam e encolham igualmente */
-    min-width: 0; /* Permite que o item encolha */
-    text-align: center;
-    white-space: nowrap; /* Evita que o texto da label ou value quebre */
-    overflow: hidden; /* Esconde overflow se o texto for muito longo */
-    text-overflow: ellipsis; /* Adiciona reticências se o texto for muito longo */
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    height: 100%;
 }
 .stat-label {
-    font-size: 0.65rem; /* Reduz ainda mais a fonte da label */
+    font-size: 0.6rem;
     color: #334155;
-    margin-bottom: 0px; /* Remove margem inferior para mais compactação */
+    margin-bottom: 0px;
+    margin-right: 1px;
     text-transform: uppercase;
     letter-spacing: 0.1px;
 }
 .stat-value {
-    font-size: 0.75rem; /* Reduz a fonte do valor */
+    font-size: 0.75rem;
     color: var(--card-value-color);
+    display: inline-block;
+    vertical-align: baseline;
 }
 .card-footer {
     width: 100%;
+    height: 28px; /* Altura fixa para o rodapé */
     padding: 6px 10px;
     background-color: var(--card-gradient-start);
     color: #ffffff;
@@ -275,9 +281,7 @@ body {
     align-items: center;
     border-bottom-left-radius: 12px;
     border-bottom-right-radius: 12px;
-    position: absolute;
-    bottom: 0;
-    left: 0;
+    /* Removido position: absolute, bottom: 0, left: 0 */
     flex-shrink: 0;
     z-index: 10;
 }
@@ -299,8 +303,8 @@ body {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
     text-align: left;
     border: 1px solid #e2e8f0;
-    flex-shrink: 0; /* Garante que o rodapé não encolha */
-    margin-top: auto; /* Empurra o rodapé para o final do contêiner flex pai */
+    flex-shrink: 0;
+    margin-top: auto;
 }
 .footer-section h2 {
     font-size: 0.9rem;
@@ -316,16 +320,18 @@ body {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+    text-align: left; /* Centralizado em media query, mas aqui left */
 }
 .footer-section li {
     margin-bottom: 5px;
     font-size: 0.7rem;
     color: #94a3b8;
     line-height: 1.3;
-    width: 48%;
+    width: 48%; /* Para duas colunas em telas maiores */
     box-sizing: border-box;
     padding-right: 10px;
 }
+/* Alinhamento de texto explícito para manter consistência */
 .footer-section li:nth-child(odd) {
     text-align: left;
 }
@@ -389,7 +395,6 @@ body {
     border-radius: 15px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     flex-shrink: 0;
-    /* Ajustado min-height para garantir que o rodapé não suba */
     min-height: 400px;
 }
 
@@ -511,9 +516,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Alinhamento ao final do flex-container pai (card-footer) */
     margin-left: auto;
-    padding-left: 5px; /* Espaço entre o texto "Amaro AI" e o botão */
+    padding-left: 5px;
 }
 
 .update-card-button:disabled {
