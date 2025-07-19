@@ -182,6 +182,7 @@ export const getLanguageTheme = (languageName) => {
             "--card-border-main": "#42B883"     // Verde principal
         }
     };
+
     // Retorna o tema da linguagem ou um tema padrão (Java) se não encontrado
-    return themes[normalizedName] || themes["java"]; 
+    return themes[normalizedName] || themes["java"];
 };

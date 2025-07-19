@@ -71,12 +71,10 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
 app.use(cors()); // Permite requisições de diferentes origens (necessário para frontend local)
 app.use(bodyParser.json({ limit: '10mb' })); // Suporta JSON bodies, com limite maior para Base64
 
-// --- MUDANÇA AQUI: Servindo index.html da raiz e a pasta public/ ---
 // Serve o index.html diretamente da raiz do projeto
 app.use(express.static(__dirname)); 
 // Serve a pasta public/ para assets como imagens e ícones
 app.use('/public', express.static(path.join(__dirname, 'public'))); 
-// --- FIM DA MUDANÇA ---
 
 // --- Funções para interagir com a API Gemini (no backend) ---
 
@@ -87,13 +85,18 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
  */
 async function getCardDataFromGemini(languageName) {
     const chatHistory = [];
-    const prompt = `Gere dados para um cartão de jogo de linguagem de programação, no estilo de um jogo de cartas de fantasia, para a linguagem ${languageName}. Inclua o nome, tipo (uma breve categoria, ex: "Enterprise & Mobile"), uma descrição concisa em português (máximo 30 palavras), estatísticas de poder (PWR), velocidade (VEL), flexibilidade (FLX), comunidade (COM) e curva de aprendizado (CRV). As estatísticas devem ser valores **entre 0 e 100** e devem refletir as características reais da linguagem:
-    - PWR (Poder): Capacidade da linguagem para lidar com tarefas complexas e de alta demanda.
-    - VEL (Velocidade): Desempenho em tempo de execução e eficiência.
-    - FLX (Flexibilidade): Adaptabilidade para diferentes paradigmas e domínios.
-    - COM (Comunidade): Tamanho e atividade da comunidade de desenvolvedores e recursos disponíveis.
-    - CRV (Curva de Aprendizado): Facilidade ou dificuldade para iniciantes aprenderem e dominarem a linguagem.
-    Além disso, forneça um prompt detalhado para gerar uma ilustração de personagem de anime no estilo Pokémon de 1ª geração para ${languageName}, com foco em suas características principais. O prompt da imagem deve especificar um aspecto retangular ligeiramente vertical (próximo de 1:1 ou 4:5) e cores que combinem com a linguagem (ex: laranjas e vermelhos para Java, roxos e laranjas para Kotlin). **Se '${languageName}' não for uma linguagem de programação, de marcação ou tecnologia web principal e reconhecível, defina 'isValidLanguage' como false e os outros campos podem ser vazios ou padrão.**`;
+    // PROMPT ATUALIZADO: Instruindo a IA a usar categorias específicas.
+    const prompt = `Gere dados para um cartão de jogo de linguagem de programação, no estilo de um jogo de cartas de fantasia, para a linguagem ${languageName}.
+Inclua o nome, um tipo (escolha entre: "Linguagem", "Framework", "Biblioteca", "Banco de Dados", "API & Plataforma", "Marcação/Estilo", "Containerization", "Mobile" ou "Outros" - selecione o que melhor se encaixa no contexto), uma descrição concisa em português (máximo 30 palavras), estatísticas de poder (PWR), velocidade (VEL), flexibilidade (FLX), comunidade (COM) e curva de aprendizado (CRV).
+As estatísticas devem ser valores **entre 0 e 100** e devem refletir as características reais da linguagem:
+- PWR (Poder): Capacidade da linguagem para lidar com tarefas complexas e de alta demanda.
+- VEL (Velocidade): Desempenho em tempo de execução e eficiência.
+- FLX (Flexibilidade): Adaptabilidade para diferentes paradigmas e domínios.
+- COM (Comunidade): Tamanho e atividade da comunidade de desenvolvedores e recursos disponíveis.
+- CRV (Curva de Aprendizado): Facilidade ou dificuldade para iniciantes aprenderem e dominarem a linguagem.
+Além disso, forneça um prompt detalhado para gerar uma ilustração de personagem de anime no estilo Pokémon de 1ª geração para ${languageName}, com foco em suas características principais.
+O prompt da imagem deve especificar um aspecto retangular ligeiramente vertical (próximo de 1:1 ou 4:5) e cores que combinem com a linguagem (ex: laranjas e vermelhos para Java, roxos e laranjas para Kotlin).
+**Se '${languageName}' não for uma linguagem de programação, de marcação ou tecnologia web principal e reconhecível, defina 'isValidLanguage' como false e os outros campos podem ser vazios ou padrão.**`;
     
     chatHistory.push({ role: "user", parts: [{ text: prompt }] });
 
@@ -121,7 +124,7 @@ async function getCardDataFromGemini(languageName) {
                     "imagePrompt": { "type": "STRING" },
                     "isValidLanguage": { "type": "BOOLEAN" } 
                 },
-                "required": ["name", "type", "description", "stats", "imagePrompt", "isValidLanguage"] 
+                "required": ["name", "type", "description", "stats", "imagePrompt", "isValidLanguage"]
             }
         }
     };
@@ -148,7 +151,7 @@ async function getCardDataFromGemini(languageName) {
                 if (parsedResult.candidates && parsedResult.candidates.length > 0 &&
                     parsedResult.candidates[0].content && parsedResult.candidates[0].content.parts &&
                     parsedResult.candidates[0].content.parts.length > 0) {
-                    
+
                     const jsonString = parsedResult.candidates[0].content.parts[0].text;
                     if (typeof jsonString === 'string' && jsonString.trim().length > 0) {
                         try {
@@ -221,6 +224,111 @@ async function generateImageFromGemini(prompt) {
     }
 }
 
+/**
+ * Processa a atualização de um card específico (ou tenta gerá-lo se não existir).
+ * Esta função contém a lógica compartilhada para gerar/atualizar cards.
+ * @param {string} languageName - O nome da linguagem a ser processada.
+ * @param {boolean} forceImageRegeneration - Força a regeneração da imagem mesmo que já exista.
+ * @returns {Promise<Object>} Objeto com sucesso/erro e o card.
+ */
+async function processCardUpdate(languageName, forceImageRegeneration = false) {
+    const normalizedLanguageName = languageName.charAt(0).toUpperCase() + languageName.slice(1).toLowerCase();
+
+    // 1. Gerar dados de texto do card via Gemini (sempre com o prompt mais recente)
+    const cardData = await getCardDataFromGemini(normalizedLanguageName);
+
+    if (!cardData || cardData.isValidLanguage === false) {
+        return { success: false, error: `"${normalizedLanguageName}" não é uma linguagem de programação, de marcação ou tecnologia web principal reconhecível.`, isValidLanguage: false };
+    }
+    
+    cardData.name = normalizedLanguageName; // Garante que o nome final no cardData seja o normalizado
+    let imageUrlToSave = `/public/images/placeholder.png`; // Fallback para imagem
+    const imageFileName = `${normalizedLanguageName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`; // Nome de arquivo seguro
+    const imageFilePath = path.join(IMAGES_DIR, imageFileName);
+
+    // 2. Gerar imagem via Gemini (Base64) ou usar existente se não for forçado
+    let generatedBase64ImageUrl = null;
+    if (forceImageRegeneration || !fs.existsSync(imageFilePath)) {
+        console.log(`Gerando imagem para '${normalizedLanguageName}' via Gemini...`);
+        generatedBase64ImageUrl = await generateImageFromGemini(cardData.imagePrompt);
+    } else {
+        console.log(`Imagem para '${normalizedLanguageName}' já existe. Não regerando.`);
+        imageUrlToSave = `/public/images/${imageFileName}`; // Usa a URL existente
+    }
+
+
+    if (generatedBase64ImageUrl) {
+        // 3. Salvar imagem localmente no diretório public/images
+        const base64Data = generatedBase64ImageUrl.replace(/^data:image\/\w+;base64,/, "");
+        
+        try {
+            fs.writeFileSync(imageFilePath, base64Data, 'base64');
+            imageUrlToSave = `/public/images/${imageFileName}`; // URL acessível pelo frontend
+            console.log(`Imagem salva localmente: ${imageUrlToSave}`);
+        } catch (fileError) {
+            console.error("Erro ao salvar imagem localmente:", fileError);
+            // Mantém o fallback se o salvamento falhar
+        }
+    } else if (forceImageRegeneration && !fs.existsSync(imageFilePath)) { // Se a regeração foi forçada mas falhou
+        console.warn(`Não foi possível regerar imagem para '${normalizedLanguageName}'. Usando placeholder.`);
+    }
+
+
+    // 4. Verificar se um ícone local existe, caso contrário, usar um fallback.
+    const iconFileName = `${normalizedLanguageName.toLowerCase().replace(/[^a-z0-9]/g, '')}.svg`;
+    const iconFilePath = path.join(ICONS_DIR, iconFileName);
+    let iconUrlToSave = ''; // String vazia se não tiver ícone específico
+
+    if (fs.existsSync(iconFilePath)) {
+        iconUrlToSave = `/public/icons/${iconFileName}`;
+        console.log(`Ícone local encontrado: ${iconUrlToSave}`);
+    } else {
+        console.log(`Ícone local para '${normalizedLanguageName}' não encontrado. O frontend usará um SVG default.`);
+    }
+
+    // 5. Salvar/Atualizar o card no banco de dados SQLite
+    return new Promise((resolve, reject) => {
+        const stmt = db.prepare(`REPLACE INTO cards (name, type, description, pwr, vel, flx, com, crv, imagePrompt, imageUrl, iconUrl, isValidLanguage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+        stmt.run(
+            normalizedLanguageName,
+            cardData.type,
+            cardData.description,
+            cardData.stats.pwr,
+            cardData.stats.vel,
+            cardData.stats.flx,
+            cardData.stats.com,
+            cardData.stats.crv,
+            cardData.imagePrompt,
+            imageUrlToSave, // URL da imagem salva no Storage local
+            iconUrlToSave, // URL do ícone local
+            cardData.isValidLanguage ? 1 : 0, // SQLite não tem booleano nativo, usa 0 ou 1
+            function(insertErr) {
+                if (insertErr) {
+                    console.error('Erro ao inserir/atualizar card no DB:', insertErr.message);
+                    return reject({ success: false, error: insertErr.message });
+                }
+                const processedCard = {
+                    name: normalizedLanguageName,
+                    type: cardData.type,
+                    description: cardData.description,
+                    pwr: cardData.stats.pwr,
+                    vel: cardData.stats.vel,
+                    flx: cardData.stats.flx,
+                    com: cardData.stats.com,
+                    crv: cardData.stats.crv,
+                    imagePrompt: cardData.imagePrompt,
+                    imageUrl: imageUrlToSave,
+                    iconUrl: iconUrlToSave, // Inclui a URL do ícone no retorno
+                    isValidLanguage: cardData.isValidLanguage
+                };
+                resolve({ success: true, card: processedCard, message: `Card para '${normalizedLanguageName}' processado com sucesso!` });
+            }
+        );
+        stmt.finalize();
+    });
+}
+
+
 // --- Rotas da API ---
 
 // Rota para obter todos os cards
@@ -244,108 +352,97 @@ app.post('/api/cards', async (req, res) => {
 
     const normalizedLanguageName = languageName.charAt(0).toUpperCase() + languageName.slice(1).toLowerCase();
 
-    // 1. Tentar obter o card do DB local
+    // Tentar obter o card do DB local
     db.get("SELECT * FROM cards WHERE name = ?", [normalizedLanguageName], async (err, row) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
         if (row) {
             // Card encontrado, retorna ele
-            console.log(`Card para '${normalizedLanguageName}' encontrado no DB local.`);
+            console.log(`Card para '${normalizedLanguageName}' já existe no DB local. Nenhuma ação necessária para esta rota.`);
             return res.status(200).json({ message: "Card já existe no banco de dados local.", card: row });
         }
 
-        // 2. Se não encontrado, gerar dados do card via Gemini (texto)
-        console.log(`Gerando dados de texto para '${normalizedLanguageName}' via Gemini...`);
-        const cardData = await getCardDataFromGemini(normalizedLanguageName);
+        // Se não encontrado, processa e insere
+        console.log(`Gerando dados e imagem para novo card '${normalizedLanguageName}' via Gemini...`);
+        const result = await processCardUpdate(normalizedLanguageName, true); // Força regeneração da imagem para novos cards
 
-        if (!cardData || cardData.isValidLanguage === false) {
-            return res.status(400).json({ error: `"${normalizedLanguageName}" não é uma linguagem de programação, de marcação ou tecnologia web principal reconhecível.`, isValidLanguage: false });
-        }
-        
-        cardData.name = normalizedLanguageName; // Garante que o nome final no cardData seja o normalizado
-        let imageUrlToSave = `/public/images/placeholder.png`; // Fallback para imagem
-        
-        // 3. Gerar imagem via Gemini (Base64)
-        console.log(`Gerando imagem para '${normalizedLanguageName}' via Gemini...`);
-        const generatedBase64ImageUrl = await generateImageFromGemini(cardData.imagePrompt);
-
-        if (generatedBase64ImageUrl) {
-            // 4. Salvar imagem localmente no diretório public/images
-            const imageFileName = `${normalizedLanguageName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`; // Nome de arquivo seguro
-            const imageFilePath = path.join(IMAGES_DIR, imageFileName);
-            
-            const base64Data = generatedBase64ImageUrl.replace(/^data:image\/\w+;base64,/, "");
-            
-            try {
-                fs.writeFileSync(imageFilePath, base64Data, 'base64');
-                imageUrlToSave = `/public/images/${imageFileName}`; // URL acessível pelo frontend
-                console.log(`Imagem salva localmente: ${imageUrlToSave}`);
-            } catch (fileError) {
-                console.error("Erro ao salvar imagem localmente:", fileError);
-                // Mantém o fallback se o salvamento falhar
-            }
+        if (result.success) {
+            res.status(201).json({ message: result.message, card: result.card });
         } else {
-            console.warn(`Não foi possível gerar imagem para '${normalizedLanguageName}'. Usando placeholder.`);
+            res.status(400).json({ error: result.error, isValidLanguage: result.isValidLanguage });
         }
-
-        // 5. Verificar se um ícone local existe, caso contrário, usar um fallback.
-        // O frontend passará a responsabilidade de qual SVG usar.
-        // O backend apenas verifica a existência para a URL a ser salva.
-        const iconFileName = `${normalizedLanguageName.toLowerCase().replace(/[^a-z0-9]/g, '')}.svg`;
-        const iconFilePath = path.join(ICONS_DIR, iconFileName);
-        let iconUrlToSave = ''; // String vazia se não tiver ícone específico
-
-        if (fs.existsSync(iconFilePath)) {
-            iconUrlToSave = `/public/icons/${iconFileName}`;
-            console.log(`Ícone local encontrado: ${iconUrlToSave}`);
-        } else {
-            console.log(`Ícone local para '${normalizedLanguageName}' não encontrado. O frontend usará um SVG default.`);
-        }
-
-        // 6. Salvar o card (com as URLs locais de imagem e ícone) no banco de dados SQLite
-        const stmt = db.prepare(`INSERT INTO cards (name, type, description, pwr, vel, flx, com, crv, imagePrompt, imageUrl, iconUrl, isValidLanguage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-        stmt.run(
-            normalizedLanguageName,
-            cardData.type,
-            cardData.description,
-            cardData.stats.pwr,
-            cardData.stats.vel,
-            cardData.stats.flx,
-            cardData.stats.com,
-            cardData.stats.crv,
-            cardData.imagePrompt,
-            imageUrlToSave, // URL da imagem salva no Storage local
-            iconUrlToSave, // URL do ícone local
-            cardData.isValidLanguage ? 1 : 0, // SQLite não tem booleano nativo, usa 0 ou 1
-            function(insertErr) {
-                if (insertErr) {
-                    console.error('Erro ao inserir card no DB:', insertErr.message);
-                    return res.status(500).json({ error: insertErr.message });
-                }
-                const newCard = {
-                    name: normalizedLanguageName,
-                    type: cardData.type,
-                    description: cardData.description,
-                    pwr: cardData.stats.pwr,
-                    vel: cardData.stats.vel,
-                    flx: cardData.stats.flx,
-                    com: cardData.stats.com,
-                    crv: cardData.stats.crv,
-                    imagePrompt: cardData.imagePrompt,
-                    imageUrl: imageUrlToSave,
-                    iconUrl: iconUrlToSave, // Inclui a URL do ícone no retorno
-                    isValidLanguage: cardData.isValidLanguage
-                };
-                res.status(201).json({ message: "Card gerado e salvo com sucesso!", card: newCard });
-            }
-        );
-        stmt.finalize();
     });
 });
+
+
+// NOVA ROTA: Rota para atualizar cards existentes (um específico ou todos)
+app.post('/api/cards/update', async (req, res) => {
+    const { languageName } = req.body; // Pode ser undefined para atualizar todos
+
+    if (languageName) {
+        // Atualizar um card específico
+        console.log(`Solicitação para atualizar card: ${languageName}`);
+        try {
+            const result = await processCardUpdate(languageName, true); // Força regeneração de imagem
+            if (result.success) {
+                res.status(200).json({ message: result.message, card: result.card });
+            } else {
+                res.status(400).json({ error: result.error, isValidLanguage: result.isValidLanguage });
+            }
+        } catch (error) {
+            console.error(`Erro ao atualizar card ${languageName}:`, error);
+            res.status(500).json({ error: `Erro interno ao atualizar card ${languageName}.` });
+        }
+    } else {
+        // Atualizar todos os cards
+        console.log('Solicitação para atualizar TODOS os cards.');
+        db.all("SELECT name FROM cards", [], async (err, rows) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+
+            const updatePromises = rows.map(row => processCardUpdate(row.name, true)); // Força regerar imagem para todos
+            
+            try {
+                const results = await Promise.allSettled(updatePromises);
+                const successfulUpdates = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value.card.name);
+                const failedUpdates = results.filter(r => r.status === 'rejected' || !r.value.success);
+
+                console.log(`Atualização em massa concluída. Sucessos: ${successfulUpdates.length}, Falhas: ${failedUpdates.length}`);
+
+                res.status(200).json({ 
+                    message: `Processo de atualização em massa concluído. ${successfulUpdates.length} cards atualizados.`,
+                    successful: successfulUpdates,
+                    failed: failedUpdates.map(r => r.status === 'rejected' ? r.reason : r.value.error)
+                });
+            } catch (error) {
+                console.error("Erro no processamento em massa de cards:", error);
+                res.status(500).json({ error: "Erro interno ao atualizar todos os cards." });
+            }
+        });
+    }
+});
+
+
+// Rota para deletar um card específico (opcional, mas útil para testes)
+app.delete('/api/cards/:name', (req, res) => {
+    const languageName = req.params.name;
+    db.run("DELETE FROM cards WHERE name = ?", [languageName], function(err) {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ message: "Card não encontrado." });
+        }
+        res.status(200).json({ message: `Card '${languageName}' deletado com sucesso.`, deletedCount: this.changes });
+    });
+});
+
 
 // Inicia o servidor
 app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
-    console.log(`Para acessar o frontend, abra http://localhost:${PORT}/public/index.html no seu navegador.`);
+    console.log(`Para acessar o frontend principal, abra http://localhost:${PORT}/index.html no seu navegador.`);
+    console.log(`Para acessar a coleção, abra http://localhost:${PORT}/collection.html no seu navegador.`);
 });

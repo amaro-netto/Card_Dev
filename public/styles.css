@@ -7,7 +7,7 @@ body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    overflow-y: hidden;
+    overflow-y: scroll;
 }
 .header-section {
     width: 100%;
@@ -43,10 +43,11 @@ body {
 
 .search-and-message-container {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+    flex-direction: column; /* MUDANÇA: Alinha os botões verticalmente por padrão */
+    align-items: flex-end; /* Alinha os itens à direita */
     flex-shrink: 0;
     min-width: 280px;
+    gap: 8px; /* MUDANÇA: Espaço entre os botões na vertical */
 }
 .search-container {
     display: flex;
@@ -86,12 +87,13 @@ body {
 }
 
 .main-content-area {
-    flex-grow: 1;
-    overflow-y: auto;
+    flex-grow: 0;
     width: 100%;
     display: flex;
     justify-content: center;
     padding: 20px 0;
+    min-height: 500px;
+    align-items: flex-start;
 }
 
 .cards-grid {
@@ -101,7 +103,6 @@ body {
     gap: 24px;
     width: 100%;
     max-width: 1200px;
-    min-height: 150px;
     align-content: flex-start;
 }
 .cards-grid > p {
@@ -124,6 +125,7 @@ body {
     border: 3px solid var(--card-border-main); 
     flex-shrink: 0;
 }
+
 .card-header {
     width: 100%;
     height: 40px;
@@ -143,11 +145,14 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
+    flex-grow: 1; /* Permite que o nome ocupe o espaço restante */
+    min-width: 0; /* Permite que o wrapper encolha */
 }
 .card-logo-svg {
     width: 20px;
     height: 20px;
     fill: #ffffff;
+    flex-shrink: 0; /* Garante que o ícone não encolha */
 }
 .card-name {
     font-size: 1.4rem;
@@ -158,10 +163,11 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-grow: 1; /* Permite que o nome encolha e use ellipsis */
 }
 .card-type {
     height: 100%;
-    width: 45%;
+    /* width: 45%; Removido para flex-grow */
     color: var(--card-text-color);
     padding: 2px 6px;
     border-radius: 0px 8px 0px 0px;
@@ -268,52 +274,194 @@ body {
     flex-shrink: 0;
 }
 
-.footer-section {
+/* Nova seção de navegação em index.html */
+.navigation-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.go-to-collection-button {
+    background-color: #10B981;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+    margin-top: 5px;
+}
+
+.go-to-collection-button:hover {
+    background-color: #059669;
+}
+
+.collection-count {
+    font-size: 0.9rem;
+    flex-grow: 1;
+    text-align: right;
+    padding-left: 10px;
+    min-width: 150px;
+    margin-top: 5px;
+}
+
+/* Estilos para a Seção de Coleção */
+.collection-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px auto;
+    background-color: #ffffff;
+    padding: 15px 20px;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+/* Classe para ocultar elementos */
+.hidden {
+    display: none;
+}
+
+/* Grid para coleção - rolagem vertical na collection.html */
+.collection-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    min-height: 200px;
+    align-content: flex-start;
+}
+
+/* Estilo específico para o botão de voltar em collection.html */
+.back-button {
+    background-color: #7f8c8d; /* Cinza */
+}
+.back-button:hover {
+    background-color: #5c6a6b; /* Cinza mais escuro */
+}
+
+/* Estilo para o novo botão de Atualizar Todos */
+.refresh-all-button {
+    background-color: #3498db; /* Um azul vibrante */
+}
+.refresh-all-button:hover {
+    background-color: #2980b9; /* Azul mais escuro no hover */
+}
+
+
+/* Ajustes para a coleção ocupar mais altura em collection.html */
+.full-height-collection {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+.full-height-collection .collection-grid {
+    flex-grow: 1;
+    align-content: flex-start;
+    padding-bottom: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Seção de Filtros */
+.filters-section {
     width: 100%;
     max-width: 1200px;
     margin: 20px auto 0 auto;
-    padding: 10px 15px;
-    background-color: #f8fafc;
-    border-radius: 10px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-    text-align: left;
-    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     flex-shrink: 0;
+    text-align: center;
 }
-.footer-section h2 {
+
+.filters-section h3 {
     font-size: 0.9rem;
-    font-weight: normal;
-    color: #64748b;
+    color: #334155;
     margin-bottom: 8px;
-    text-align: left;
+    font-weight: 600;
 }
-.footer-section ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+
+.filter-buttons-container {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 8px;
+    overflow-x: hidden;
+    padding-bottom: 0;
+    -webkit-overflow-scrolling: auto;
 }
-.footer-section li {
-    margin-bottom: 5px;
-    font-size: 0.7rem;
-    color: #94a3b8;
-    line-height: 1.3;
-    width: 48%;
-    box-sizing: border-box;
-    padding-right: 10px;
+
+.filter-button {
+    background-color: #cbd5e1;
+    color: #475569;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border: none;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
-.footer-section li:nth-child(odd) {
-    text-align: left;
+
+.filter-button:hover {
+    background-color: #a0aec0;
+    color: #1e293b;
 }
-.footer-section li:nth-child(even) {
-    text-align: left;
+
+.filter-button.active {
+    background-color: #4f46e5;
+    color: white;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
 }
-.footer-section li strong {
-    color: #64748b;
-    font-size: 0.75rem;
+
+.filter-button.active:hover {
+    background-color: #3730a3;
 }
+
+/* Estilos para o botão de atualização individual no card */
+.update-card-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 5px; /* Espaço entre o tipo e o botão */
+    line-height: 1; /* Garante alinhamento vertical do SVG */
+    flex-shrink: 0; /* Impede que ele encolha */
+}
+
+.update-card-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.update-card-button .update-icon {
+    width: 18px; /* Tamanho do ícone */
+    height: 18px;
+    stroke: white; /* Cor do stroke do ícone */
+    transition: stroke 0.2s ease;
+}
+
+.update-card-button:hover .update-icon {
+    stroke: #ffcc00; /* Um amarelo no hover para destacar */
+}
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -392,5 +540,80 @@ body {
         width: 100%;
         padding-right: 0;
         text-align: center !important;
+    }
+
+    /* Ajustes responsivos para as novas seções */
+    .navigation-section {
+        flex-direction: column;
+        align-items: center;
+        padding: 15px;
+    }
+    .go-to-collection-button {
+        width: 90%;
+        max-width: 350px;
+        margin-top: 0;
+    }
+    .collection-count {
+        text-align: center;
+        padding-left: 0;
+        margin-top: 10px;
+    }
+    .collection-grid {
+        justify-content: center;
+        flex-wrap: wrap;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+    .collection-section.full-height-collection .collection-grid {
+        overflow-x: hidden;
+    }
+
+    /* Ajusta botões no cabeçalho da coleção */
+    .search-and-message-container {
+        flex-direction: column; /* Força empilhamento em telas pequenas */
+        align-items: center;
+        gap: 5px;
+        min-width: unset; /* Remove min-width para flexibilidade */
+    }
+    .search-and-message-container .go-to-collection-button {
+        width: 90%; /* Ocupa mais largura em mobile */
+        max-width: 350px;
+        margin: 5px 0; /* Margem vertical entre eles */
+    }
+    .search-and-message-container .message-area {
+        text-align: center;
+    }
+
+    /* Ajustes responsivos para filtros */
+    .filters-section {
+        padding: 10px;
+        margin-top: 15px;
+    }
+    .filters-section h3 {
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+    }
+    .filter-buttons-container {
+        gap: 6px;
+        flex-wrap: wrap;
+        overflow-x: hidden;
+        justify-content: center;
+        padding-bottom: 0;
+    }
+    .filter-button {
+        padding: 5px 8px;
+        font-size: 0.7rem;
+    }
+
+    /* Ajuste para o botão de atualização individual em cards menores */
+    .card-header {
+        padding-right: 5px; /* Reduz padding para dar mais espaço */
+    }
+    .update-card-button {
+        margin-left: 2px; /* Reduz espaço */
+    }
+    .update-card-button .update-icon {
+        width: 16px; /* Ícone um pouco menor em mobile */
+        height: 16px;
     }
 }

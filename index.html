@@ -4,16 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coleção de Cards de Linguagens</title>
-    <!-- Inclui o Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Link para o arquivo CSS separado -->
     <link rel="stylesheet" href="/public/styles.css">
 </head>
 <body>
     <div class="header-section">
         <div class="header-info">
             <h1>Coleção de Cards de Linguagens</h1>
-            <p>Busque por uma linguagem ou veja sua coleção. Se a linguagem não existir, a IA criará um card para ela!</p>
+            <p>Busque por uma linguagem ou crie um novo card!</p>
         </div>
         <div class="search-and-message-container">
             <div class="search-container">
@@ -24,12 +22,15 @@
         </div>
     </div>
 
-    <!-- Área principal de conteúdo que irá rolar se necessário -->
     <div class="main-content-area">
-        <div id="cardsGrid" class="cards-grid">
-            <!-- Os cards serão carregados aqui dinamicamente -->
-            <p class="text-gray-500">Carregando cards...</p>
+        <div id="singleCardDisplay" class="cards-grid">
+            <p class="text-gray-500">Busque por uma linguagem para ver o card aqui.</p>
         </div>
+    </div>
+
+    <div class="navigation-section">
+        <button id="goToCollectionButton" class="go-to-collection-button">Ver Minha Coleção Completa</button>
+        <p id="collectionCount" class="collection-count text-gray-700"></p>
     </div>
 
     <div class="footer-section">
@@ -45,16 +46,18 @@
 
     <script type="module">
         // Variáveis globais para o URL base do backend
-        const API_BASE_URL = 'http://localhost:3000'; // O seu servidor Node.js
+        const API_BASE_URL = 'http://localhost:3000';
 
         // Importa a função getLanguageTheme do arquivo separado
         import { getLanguageTheme } from '/public/themes.js';
 
         // Referências aos elementos HTML
-        const cardsGrid = document.getElementById('cardsGrid');
+        const singleCardDisplay = document.getElementById('singleCardDisplay');
         const languageSearchInput = document.getElementById('languageSearchInput');
         const searchButton = document.getElementById('searchButton');
         const messageArea = document.getElementById('messageArea');
+        const goToCollectionButton = document.getElementById('goToCollectionButton');
+        const collectionCount = document.getElementById('collectionCount');
 
         /**
          * Atualiza a área de mensagens na UI.
@@ -82,45 +85,39 @@
          */
         const fitTextToContainer = (element, maxFontSizePx, minFontSizePx, maxLines = 1) => {
             let currentFontSize = maxFontSizePx;
-            element.style.fontSize = `${currentFontSize}px`; // Começa com o tamanho máximo
+            element.style.fontSize = `${currentFontSize}px`;
 
-            // Reset overflow properties to allow proper measurement
             element.style.overflow = 'visible';
-            element.style.whiteSpace = 'normal'; // Permite quebra de linha para descrição
+            element.style.whiteSpace = 'normal';
 
-            // Loop para diminuir o tamanho da fonte até que o texto caiba ou o minFontSize seja atingido
             while (currentFontSize > minFontSizePx) {
                 let overflows = false;
 
                 if (maxLines === 1) {
-                    // Para texto de linha única (nome, tipo): verifica overflow horizontal
                     if (element.scrollWidth > element.clientWidth) {
                         overflows = true;
                     }
                 } else {
-                    // Para texto multilinha (descrição): verifica overflow vertical
                     if (element.scrollHeight > element.clientHeight) {
                         overflows = true;
                     }
                 }
 
                 if (overflows) {
-                    currentFontSize -= 0.5; // Diminui em 0.5px para ajuste mais fino
+                    currentFontSize -= 0.5;
                     element.style.fontSize = `${currentFontSize}px`;
                 } else {
-                    break; // O texto coube
+                    break;
                 }
             }
 
-            // Garante que o texto não transborde visualmente após o ajuste
-            // Reaplicamos as propriedades de overflow e white-space para o comportamento final
             if (maxLines === 1) {
                 element.style.overflow = 'hidden';
-                element.style.whiteSpace = 'nowrap'; // Impede quebra de linha para linha única
-                element.style.textOverflow = 'ellipsis'; // Adiciona reticências se ainda for muito longo
+                element.style.whiteSpace = 'nowrap';
+                element.style.textOverflow = 'ellipsis';
             } else {
-                element.style.overflow = 'hidden'; // Esconde o overflow para a descrição
-                element.style.whiteSpace = 'normal'; // Mantém a quebra de linha para a descrição
+                element.style.overflow = 'hidden';
+                element.style.whiteSpace = 'normal';
             }
         };
 
@@ -132,8 +129,7 @@
         const createCardElement = (cardData) => {
             const cardDiv = document.createElement('div');
             cardDiv.className = 'card-container';
-            // Aplica as variáveis CSS personalizadas para o tema
-            const theme = getLanguageTheme(cardData.name); // Agora importado de themes.js
+            const theme = getLanguageTheme(cardData.name);
             for (const [prop, value] of Object.entries(theme)) {
                 cardDiv.style.setProperty(prop, value);
             }
@@ -142,7 +138,7 @@
             if (cardData.iconUrl) {
                 iconHtmlContent = `<img class="card-logo-svg" src="${API_BASE_URL}${cardData.iconUrl}" alt="${cardData.name} Icon">`;
             } else {
-                const defaultSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>'; // Círculo genérico
+                const defaultSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>';
                 iconHtmlContent = `<svg class="card-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>${cardData.name}</title>${defaultSvgPath}</svg>`;
             }
 
@@ -155,8 +151,8 @@
                     <div class="card-type" data-max-font="0.8" data-min-font="0.6">${cardData.type}</div>
                 </div>
                 <div class="card-image-wrapper">
-                    <img class="card-image" src="${cardData.imageUrl || API_BASE_URL + '/public/images/placeholder.png'}" 
-                         alt="Ilustração do ${cardData.name} como um Personagem Anime">
+                    <img class="card-image" src="${cardData.imageUrl || API_BASE_URL + '/public/images/placeholder.png'}"
+                    alt="Ilustração do ${cardData.name} como um Personagem Anime">
                 </div>
                 <div class="card-description" data-max-font="0.85" data-min-font="0.6" data-max-lines="4">
                     ${cardData.description}
@@ -191,38 +187,34 @@
         };
 
         /**
-         * Renderiza uma coleção de cards na grade e ajusta o texto.
+         * Renderiza uma coleção de cards em um contêiner específico e ajusta o texto.
          * @param {Array<Object>} cardsArray - Um array de objetos de dados de card.
+         * @param {HTMLElement} containerElement - O elemento HTML onde os cards serão renderizados.
          */
-        const renderCards = (cardsArray) => {
-            cardsGrid.innerHTML = ''; // Limpa o grid atual
+        const renderCards = (cardsArray, containerElement) => {
+            containerElement.innerHTML = '';
             if (cardsArray.length === 0) {
-                cardsGrid.innerHTML = '<p class="text-gray-500">Nenhum card na sua coleção ainda. Que tal buscar por "Java" ou "Python"?</p>';
+                containerElement.innerHTML = '<p class="text-gray-500">Nenhum card nesta seção ainda.</p>';
                 return;
             }
             cardsArray.forEach(cardData => {
                 const cardElement = createCardElement(cardData);
-                cardsGrid.appendChild(cardElement);
+                containerElement.appendChild(cardElement);
 
-                // Após o elemento ser adicionado ao DOM, ajuste o texto
                 const nameEl = cardElement.querySelector('.card-name');
                 const typeEl = cardElement.querySelector('.card-type');
                 const descriptionEl = cardElement.querySelector('.card-description');
 
-                // Obter o valor de 1rem em pixels (geralmente 16px, mas pode variar)
                 const remToPx = parseFloat(window.getComputedStyle(document.documentElement).fontSize);
 
-                // Ajustar o nome do card
                 const nameMaxFont = parseFloat(nameEl.dataset.maxFont) * remToPx;
                 const nameMinFont = parseFloat(nameEl.dataset.minFont) * remToPx;
-                fitTextToContainer(nameEl, nameMaxFont, nameMinFont, 1); 
+                fitTextToContainer(nameEl, nameMaxFont, nameMinFont, 1);
 
-                // Ajustar o tipo do card
                 const typeMaxFont = parseFloat(typeEl.dataset.maxFont) * remToPx;
                 const typeMinFont = parseFloat(typeEl.dataset.minFont) * remToPx;
                 fitTextToContainer(typeEl, typeMaxFont, typeMinFont, 1);
 
-                // Ajustar a descrição do card
                 const descMaxFont = parseFloat(descriptionEl.dataset.maxFont) * remToPx;
                 const descMinFont = parseFloat(descriptionEl.dataset.minFont) * remToPx;
                 const descMaxLines = parseInt(descriptionEl.dataset.maxLines, 10);
@@ -231,22 +223,19 @@
         };
 
         /**
-         * Carrega a coleção inicial de cards do backend.
+         * Carrega a contagem da coleção do backend e a exibe.
          */
-        const loadInitialCollection = async () => {
-            updateMessage("Carregando sua coleção de cards...", "info");
+        const loadCollectionCount = async () => {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/cards`);
                 if (!response.ok) {
-                    throw new Error(`Erro ao carregar cards: ${response.status} ${response.statusText}`);
+                    throw new Error(`Erro ao carregar contagem de cards: ${response.status} ${response.statusText}`);
                 }
                 const cards = await response.json();
-                renderCards(cards);
-                updateMessage(`Sua coleção tem ${cards.length} cards.`, "success");
+                collectionCount.textContent = `Você tem ${cards.length} cards na sua coleção.`;
             } catch (error) {
-                console.error("Erro ao carregar a coleção inicial:", error);
-                updateMessage("Erro ao carregar sua coleção de cards. Verifique o console do servidor e do navegador. O servidor Node.js pode não estar rodando.", "error");
-                cardsGrid.innerHTML = '<p class="text-red-500">Erro ao carregar cards. O servidor Node.js pode não estar rodando.</p>';
+                console.error("Erro ao carregar contagem da coleção:", error);
+                collectionCount.textContent = "Erro ao carregar contagem de cards.";
             }
         };
 
@@ -255,13 +244,14 @@
          */
         const handleSearch = async () => {
             const languageName = languageSearchInput.value.trim();
+
             if (!languageName) {
                 updateMessage("Por favor, digite o nome de uma linguagem.", "info");
                 return;
             }
 
             updateMessage(`Buscando ou gerando card para "${languageName}"...`, "info");
-            searchButton.disabled = true; // Desabilita o botão durante a operação
+            searchButton.disabled = true;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/cards`, {
@@ -273,26 +263,32 @@
                 const result = await response.json();
 
                 if (!response.ok) {
-                    // Erro do servidor ou validação da IA (isValidLanguage: false)
                     if (result.isValidLanguage === false) {
                         updateMessage(`"${languageName}" não é uma linguagem de programação, de marcação ou tecnologia web principal reconhecível. Não foi possível gerar o card.`, "error");
                     } else {
                         updateMessage(`Erro: ${result.error || 'Falha ao processar a requisição'}. Verifique o console.`, "error");
                     }
                     console.error("Erro do servidor:", result.error || result.message || "Erro desconhecido");
+                    singleCardDisplay.innerHTML = '<p class="text-gray-500">Nenhum card nesta seção ainda.</p>';
                     return;
                 }
 
-                // Se a resposta for OK, o card foi encontrado ou gerado com sucesso
                 updateMessage(`Card para "${languageName}" processado com sucesso!`, "success");
-                loadInitialCollection(); // Recarrega toda a coleção para exibir o novo/existente card
-                languageSearchInput.value = ''; // Limpa o campo de busca
+                
+                // Exibe apenas o card encontrado/gerado na área principal
+                renderCards([result.card], singleCardDisplay);
+                
+                // Atualiza a contagem da coleção
+                loadCollectionCount();
+                
+                languageSearchInput.value = '';
 
             } catch (error) {
                 console.error("Erro na busca/geração do card (requisição de rede):", error);
                 updateMessage(`Erro ao buscar/gerar card para "${languageName}". Verifique se o servidor Node.js está rodando.`, "error");
+                singleCardDisplay.innerHTML = '<p class="text-red-500">Erro ao carregar cards. O servidor Node.js pode não estar rodando.</p>';
             } finally {
-                searchButton.disabled = false; // Reabilita o botão
+                searchButton.disabled = false;
             }
         };
 
@@ -304,8 +300,13 @@
             }
         });
 
-        // Inicia o carregamento da coleção quando a janela é totalmente carregada
-        window.onload = loadInitialCollection;
+        // Redireciona para a página da coleção
+        goToCollectionButton.addEventListener('click', () => {
+            window.location.href = '/collection.html';
+        });
+
+        // Carrega a contagem inicial da coleção ao carregar a página
+        window.onload = loadCollectionCount;
     </script>
 </body>
 </html>
