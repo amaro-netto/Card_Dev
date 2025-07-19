@@ -39,6 +39,9 @@ const IMAGES_DIR = path.join(__dirname, 'public', 'images');
 // Caminho para o diretório de ícones
 const ICONS_DIR = path.join(__dirname, 'public', 'icons');
 
+// NOVO: Caminho para o arquivo CSV de linguagens
+const LANGUAGES_CSV_FILE_PATH = path.join(__dirname, 'data', 'Languages.csv'); // Caminho para o CSV
+
 
 // Garante que os diretórios 'data', 'public/images' e 'public/icons' existam
 if (!fs.existsSync(path.join(__dirname, 'data'))) {
@@ -76,7 +79,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
             if (createErr) {
                 console.error('Erro ao criar a tabela cards:', createErr.message);
             } else {
-                console.log('Tabela "cards" verificada/criada.');
+                console.log('Tabela "cards" verificada/creada.');
             }
         });
     }
@@ -85,6 +88,12 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
 // Middlewares
 app.use(cors()); // Permite requisições de diferentes origens (necessário para frontend local)
 app.use(bodyParser.json({ limit: '10mb' })); // Suporta JSON bodies, com limite maior para Base64
+
+// MIDDLEWARE PARA LOGAR TODAS AS REQUISIÇÕES
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next(); // Passa o controle para o próximo middleware/rota
+});
 
 // --- FUNÇÕES DE LÓGICA DO BACKEND ---
 
@@ -541,11 +550,9 @@ app.post('/api/cards/update', async (req, res) => {
 });
 
 
-// REMOVIDA: Rota para upload em massa de cards (JSON fornecido) - Não será mais usada
-
-
 // Rota para gerar dados de texto em massa via IA (Gemini)
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'your_super_secret_admin_key'; 
+const GEMINI_REQUEST_DELAY_MS = 2000; // Atraso de 2 segundos entre as requisições Gemini
 
 app.post('/api/admin/generate-bulk', async (req, res) => {
     const authHeader = req.headers['authorization'];
@@ -573,6 +580,9 @@ app.post('/api/admin/generate-bulk', async (req, res) => {
     const results = [];
     for (const name of namesArray) {
         try {
+            // Adicionar atraso antes de cada requisição ao Gemini
+            await new Promise(resolve => setTimeout(resolve, GEMINI_REQUEST_DELAY_MS));
+
             const processResult = await processCardUpdate(name, false); 
 
             if (processResult.success) {
@@ -603,11 +613,7 @@ app.post('/api/admin/generate-bulk', async (req, res) => {
 });
 
 
-// REMOVIDA: Rota para carregar linguagens de um JSON local e iniciar geração em massa - Não será mais usada
-// REMOVIDA: getLanguageNamesFromJson() - Não será mais usada
-
-
-// NOVA ROTA: Rota para upload de CSV e geração em massa
+// NOVA ROTA: Rota para upload de CSV e geração em massa (com verificação de existência e atraso)
 app.post('/api/admin/upload-csv', async (req, res) => {
     const authHeader = req.headers['authorization'];
     if (!authHeader || authHeader !== `Bearer ${ADMIN_SECRET}`) {
@@ -654,7 +660,24 @@ app.post('/api/admin/upload-csv', async (req, res) => {
     const results = [];
     for (const name of languageNames) {
         try {
-            // Chamamos processCardUpdate, mas forceImageRegeneration é false para não gerar imagens agora.
+            // Adicionar atraso antes de cada requisição ao Gemini (para evitar rate limit)
+            await new Promise(resolve => setTimeout(resolve, GEMINI_REQUEST_DELAY_MS));
+
+            // Verificar se o card já existe antes de chamar a API Gemini
+            const existingCard = await new Promise((resolve, reject) => {
+                db.get("SELECT name FROM cards WHERE name = ?", [name], (err, row) => {
+                    if (err) reject(err);
+                    resolve(row);
+                });
+            });
+
+            if (existingCard) {
+                results.push({ name: name, success: true, message: `Card para '${name}' já existe no DB. Pulando geração Gemini.` });
+                console.log(`INFO: Card para '${name}' já existe. Pulando geração.`);
+                continue; // Pula para a próxima linguagem no loop
+            }
+
+            // Se não existe, procede com a geração Gemini
             const processResult = await processCardUpdate(name, false); 
 
             if (processResult.success) {

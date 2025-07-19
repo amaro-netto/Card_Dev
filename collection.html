@@ -15,7 +15,6 @@
         </div>
         <div class="search-and-message-container">
             <button id="backButton" class="go-to-collection-button back-button">Voltar à Busca</button>
-            <button id="updateAllCardsButton" class="go-to-collection-button refresh-all-button">Atualizar Todos Cards</button>
             <div id="messageArea" class="message-area text-gray-700"></div>
         </div>
     </div>
@@ -64,7 +63,7 @@
         const myCollectionGrid = document.getElementById('myCollectionGrid');
         const messageArea = document.getElementById('messageArea');
         const backButton = document.getElementById('backButton');
-        const updateAllCardsButton = document.getElementById('updateAllCardsButton');
+        // REMOVIDO: const updateAllCardsButton = document.getElementById('updateAllCardsButton');
         const filterButtons = document.querySelectorAll('.filter-button');
         let allCardsData = []; // Variável para armazenar todos os cards carregados
 
@@ -219,7 +218,7 @@
                 </div>
                 <div class="card-image-wrapper">
                     <img class="card-image" src="${cardData.imageUrl || API_BASE_URL + '/public/images/placeholder.png'}"
-                    alt="Ilustração do ${cardData.name} como um Personagem Anime">
+                        alt="Ilustração do ${cardData.name} como um Personagem Anime">
                 </div>
                 <div class="card-description" data-max-font="0.85" data-min-font="0.6" data-max-lines="4">
                     ${cardData.description}
@@ -303,9 +302,9 @@
 
         const loadCollectionAndApplyFilter = async () => {
             updateMessage("Carregando sua coleção de cards...", "info");
-            updateAllCardsButton.disabled = true;
+            // REMOVIDO: updateAllCardsButton.disabled = true;
             filterButtons.forEach(btn => btn.disabled = true);
-            
+
             try {
                 const response = await fetch(`${API_BASE_URL}/api/cards`);
                 if (!response.ok) {
@@ -324,7 +323,7 @@
                 updateMessage("Erro ao carregar sua coleção de cards. Verifique o console do servidor e do navegador. O servidor Node.js pode não estar rodando.", "error");
                 myCollectionGrid.innerHTML = '<p class="text-red-500">Erro ao carregar cards. O servidor Node.js pode não estar rodando.</p>';
             } finally {
-                updateAllCardsButton.disabled = false;
+                // REMOVIDO: updateAllCardsButton.disabled = false;
                 filterButtons.forEach(btn => btn.disabled = false);
             }
         };
@@ -342,7 +341,7 @@
 
         const updateSpecificCard = async (languageName) => {
             updateMessage(`Atualizando card para "${languageName}"... Isso pode levar um momento.`, "info");
-            updateAllCardsButton.disabled = true;
+            // REMOVIDO: updateAllCardsButton.disabled = true;
             filterButtons.forEach(btn => btn.disabled = true);
             const cardElement = document.querySelector(`.card-container[data-language-name="${languageName}"]`);
             if (cardElement) {
@@ -370,7 +369,7 @@
                 console.error(`Erro ao atualizar card "${languageName}":`, error);
                 updateMessage(`Erro ao atualizar card "${languageName}": ${error.message}`, "error");
             } finally {
-                updateAllCardsButton.disabled = false;
+                // REMOVIDO: updateAllCardsButton.disabled = false;
                 filterButtons.forEach(btn => btn.disabled = false);
                 const cardElement = document.querySelector(`.card-container[data-language-name="${languageName}"]`);
                 if (cardElement) {
@@ -380,6 +379,8 @@
             }
         };
 
+        // REMOVIDO: A função updateAllCards foi movida para o admin.html
+        /*
         const updateAllCards = async () => {
             if (!confirm("Tem certeza que deseja atualizar TODOS os cards da sua coleção? Isso pode levar vários minutos e consumir cota da sua API Gemini.")) {
                 return;
@@ -419,13 +420,14 @@
                 filterButtons.forEach(btn => btn.disabled = false);
             }
         };
+        */
 
         // Event Listeners
         backButton.addEventListener('click', () => {
             window.location.href = '/index.html';
         });
 
-        updateAllCardsButton.addEventListener('click', updateAllCards);
+        // REMOVIDO: updateAllCardsButton.addEventListener('click', updateAllCards);
 
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {

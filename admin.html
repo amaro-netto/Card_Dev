@@ -100,6 +100,10 @@
             background-color: #27AE60; /* Verde mais escuro */
         }
 
+        .action-button.refresh-all { /* NOVO: Estilo para o botão Atualizar Todos Cards */
+            background-color: #3498db; /* Azul para atualizar */
+        }
+
         .action-button:hover {
             background-color: #45a049;
         }
@@ -112,6 +116,11 @@
             background-color: #1E8449; 
         }
 
+        .action-button.refresh-all:hover { /* NOVO: Hover para o botão Atualizar Todos Cards */
+            background-color: #2980b9;
+        }
+
+
         .action-button:disabled {
             background-color: #a5d6a7;
             cursor: not-allowed;
@@ -123,6 +132,10 @@
         }
         .action-button.csv-upload:disabled { /* Disabled para o botão de Upload CSV */
             background-color: #82E0AA;
+            cursor: not-allowed;
+        }
+        .action-button.refresh-all:disabled { /* NOVO: Disabled para o botão Atualizar Todos Cards */
+            background-color: #8ac0e2;
             cursor: not-allowed;
         }
 
@@ -228,6 +241,12 @@
         <button id="uploadCsvButton" class="action-button csv-upload">Fazer Upload CSV e Gerar</button>
         <div id="adminMessageAreaCsvUpload" class="admin-message-area"></div>
 
+        <h2 class="section-header">3. Atualizar Todos os Cards Existentes</h2>
+        <p class="text-gray-600 text-center text-sm">Re-gera os dados e a imagem de *todos* os cards na sua coleção via IA. Isso pode levar um longo tempo e consumir muitos créditos da API de imagem.</p>
+        
+        <button id="updateAllCardsButtonAdmin" class="action-button refresh-all">Atualizar Todos Cards Agora</button>
+        <div id="adminMessageAreaUpdateAll" class="admin-message-area"></div>
+
         <button id="backToHomeButton" class="back-to-home-button">Voltar à Página Inicial</button>
     </div>
 
@@ -243,6 +262,11 @@
         const csvDataInput = document.getElementById('csvDataInput');
         const uploadCsvButton = document.getElementById('uploadCsvButton');
         const adminMessageAreaCsvUpload = document.getElementById('adminMessageAreaCsvUpload');
+
+        // NOVO: Elementos para Atualizar Todos os Cards
+        const updateAllCardsButtonAdmin = document.getElementById('updateAllCardsButtonAdmin');
+        const adminMessageAreaUpdateAll = document.getElementById('adminMessageAreaUpdateAll');
+
 
         // Elemento da Chave Secreta (compartilhado)
         const adminSecretKeyInput = document.getElementById('adminSecretKey');
@@ -329,10 +353,10 @@
                 const response = await fetch(`${API_BASE_URL}/api/admin/upload-csv`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json', // Enviamos como JSON, com a string CSV dentro
+                        'Content-Type': 'application/json', 
                         'Authorization': `Bearer ${adminKey}` 
                     },
-                    body: JSON.stringify({ csvData: csvData }) // Envia o CSV como uma propriedade de um objeto JSON
+                    body: JSON.stringify({ csvData: csvData }) 
                 });
 
                 const result = await response.json();
@@ -356,6 +380,56 @@
                 console.error('Erro na requisição de upload CSV:', error);
             } finally {
                 uploadCsvButton.disabled = false;
+            }
+        });
+
+        // NOVO: Event Listener para Atualizar Todos os Cards (no Admin)
+        updateAllCardsButtonAdmin.addEventListener('click', async () => {
+            const adminKey = adminSecretKeyInput.value.trim();
+
+            if (!adminKey) {
+                updateMessage(adminMessageAreaUpdateAll, 'Por favor, insira a chave secreta de administração.', 'error');
+                return;
+            }
+
+            if (!confirm("Tem certeza que deseja atualizar TODOS os cards da sua coleção? Isso pode levar vários minutos e consumir muitos créditos da API de imagem.")) {
+                return;
+            }
+
+            updateMessage(adminMessageAreaUpdateAll, "Atualizando TODOS os cards... Isso pode demorar bastante!", "info");
+            updateAllCardsButtonAdmin.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/cards/update`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminKey}` // Envia a chave de admin para a rota de atualização
+                    },
+                    body: JSON.stringify({}) // Sem body específico, pois a rota no backend não espera por languageName para atualização em massa
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    updateMessage(adminMessageAreaUpdateAll, `Erro ao atualizar todos os cards: ${result.error || 'Falha desconhecida'}`, "error");
+                    console.error("Erro ao atualizar todos os cards:", result.error);
+                } else {
+                    let successCount = (result.successful && result.successful.length !== undefined) ? result.successful.length : 0;
+                    let failedCount = (result.failed && result.failed.length !== undefined) ? result.failed.length : 0;
+                    let successMessage = `Atualização em massa concluída: ${successCount} cards atualizados.`;
+                    if (failedCount > 0) {
+                        successMessage += ` ${failedCount} falharam. Verifique o console do servidor para detalhes.`;
+                        updateMessage(adminMessageAreaUpdateAll, successMessage, "warning");
+                    } else {
+                        updateMessage(adminMessageAreaUpdateAll, successMessage, "success");
+                    }
+                }
+            } catch (error) {
+                updateMessage(adminMessageAreaUpdateAll, `Erro de rede ou servidor: ${error.message}. Verifique se o servidor Node.js está rodando.`, "error");
+                console.error("Erro de rede ao atualizar todos os cards:", error);
+            } finally {
+                updateAllCardsButtonAdmin.disabled = false;
             }
         });
 
