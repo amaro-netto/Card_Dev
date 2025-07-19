@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração - Gerenciamento de Cards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/public/styles.css">
+    <style>
+        /* Estilos específicos para a página de administração */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow-y: scroll;
+        }
+
+        .admin-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 25px;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .admin-container h1 {
+            font-size: 1.8rem;
+            color: #334155;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .section-header {
+            font-size: 1.4rem;
+            color: #334155;
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .form-group textarea,
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif; /* Use Inter para consistência */
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+        
+        .form-group input[type="password"] {
+            font-family: monospace; /* Para senhas, manter monospace para clareza */
+        }
+
+
+        .form-group textarea {
+            height: 300px;
+            font-family: monospace; /* Para CSV, manter monospace */
+        }
+
+        .action-button {
+            background-color: #4CAF50; /* Verde */
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            width: 100%;
+            border: none;
+            margin-top: 10px;
+        }
+
+        .action-button.generate {
+            background-color: #007ACC; /* Azul para gerar via IA */
+        }
+
+        .action-button.csv-upload { /* Estilo para o botão de Upload CSV */
+            background-color: #27AE60; /* Verde mais escuro */
+        }
+
+        .action-button:hover {
+            background-color: #45a049;
+        }
+
+        .action-button.generate:hover {
+            background-color: #005B99;
+        }
+
+        .action-button.csv-upload:hover { /* Hover para o botão de Upload CSV */
+            background-color: #1E8449; 
+        }
+
+        .action-button:disabled {
+            background-color: #a5d6a7;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .action-button.generate:disabled {
+            background-color: #8ac0e2;
+            cursor: not-allowed;
+        }
+        .action-button.csv-upload:disabled { /* Disabled para o botão de Upload CSV */
+            background-color: #82E0AA;
+            cursor: not-allowed;
+        }
+
+
+        .admin-message-area {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .admin-message-area.info {
+            background-color: #e0f2f7;
+            color: #01579b;
+        }
+        .admin-message-area.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .admin-message-area.error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .admin-message-area.warning {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+
+        .back-to-home-button {
+            background-color: #7f8c8d;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            border: none;
+            text-align: center;
+            margin-top: 20px; /* Mais espaço */
+            width: 100%;
+        }
+
+        .back-to-home-button:hover {
+            background-color: #5c6a6b;
+        }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                margin: 20px auto;
+                padding: 15px;
+            }
+            .admin-container h1 {
+                font-size: 1.5rem;
+            }
+            .section-header {
+                font-size: 1.2rem;
+                margin-top: 20px;
+            }
+            .form-group textarea,
+            .form-group input {
+                padding: 8px;
+            }
+            .action-button {
+                padding: 10px 15px;
+            }
+            .admin-message-area {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Administração - Gerenciamento de Cards</h1>
+        
+        <div class="form-group">
+            <label for="adminSecretKey">Chave Secreta de Administração:</label>
+            <input type="password" id="adminSecretKey" placeholder="Digite sua chave secreta">
+        </div>
+
+        <h2 class="section-header">1. Gerar Cards em Massa via IA (Gemini)</h2>
+        <p class="text-gray-600 text-center text-sm">Digite os nomes das linguagens, frameworks ou tecnologias, separados por vírgula. O Gemini gerará os dados de texto para cada um. As imagens serão placeholders e precisarão ser geradas separadamente na página de coleção.</p>
+        
+        <div class="form-group">
+            <label for="languageNamesInput">Nomes (separados por vírgula):</label>
+            <input type="text" id="languageNamesInput" placeholder="Python, Java, React, Node.js">
+        </div>
+
+        <button id="generateBulkButton" class="action-button generate">Gerar Cards via Gemini em Massa</button>
+        <div id="adminMessageAreaGenerate" class="admin-message-area"></div>
+
+        <h2 class="section-header">2. Upload de Linguagens via CSV</h2>
+        <p class="text-gray-600 text-center text-sm">Cole o conteúdo CSV completo (incluindo o cabeçalho) da lista de linguagens. A coluna de nomes deve ser "ProgrammingLanguage".</p>
+        
+        <div class="form-group">
+            <label for="csvDataInput">Conteúdo CSV:</label>
+            <textarea id="csvDataInput" placeholder="ProgrammingLanguage,OtherColumn&#10;Python,Value1&#10;Java,Value2"></textarea>
+        </div>
+
+        <button id="uploadCsvButton" class="action-button csv-upload">Fazer Upload CSV e Gerar</button>
+        <div id="adminMessageAreaCsvUpload" class="admin-message-area"></div>
+
+        <button id="backToHomeButton" class="back-to-home-button">Voltar à Página Inicial</button>
+    </div>
+
+    <script type="module">
+        const API_BASE_URL = 'http://localhost:3000'; 
+        
+        // Elementos para Geração em Massa via IA
+        const languageNamesInput = document.getElementById('languageNamesInput');
+        const generateBulkButton = document.getElementById('generateBulkButton');
+        const adminMessageAreaGenerate = document.getElementById('adminMessageAreaGenerate');
+
+        // Elementos para Upload CSV
+        const csvDataInput = document.getElementById('csvDataInput');
+        const uploadCsvButton = document.getElementById('uploadCsvButton');
+        const adminMessageAreaCsvUpload = document.getElementById('adminMessageAreaCsvUpload');
+
+        // Elemento da Chave Secreta (compartilhado)
+        const adminSecretKeyInput = document.getElementById('adminSecretKey');
+
+        const backToHomeButton = document.getElementById('backToHomeButton');
+
+        // Função para atualizar mensagens (agora específica para áreas diferentes)
+        const updateMessage = (areaElement, message, type = 'info') => {
+            areaElement.textContent = message;
+            areaElement.className = 'admin-message-area ' + type;
+        };
+
+        // Event Listener para Geração em Massa via IA (Gemini)
+        generateBulkButton.addEventListener('click', async () => {
+            const languageNames = languageNamesInput.value.trim();
+            const adminKey = adminSecretKeyInput.value.trim();
+
+            if (!languageNames) {
+                updateMessage(adminMessageAreaGenerate, 'Por favor, digite os nomes das linguagens (separados por vírgula).', 'error');
+                return;
+            }
+
+            if (!adminKey) {
+                updateMessage(adminMessageAreaGenerate, 'Por favor, insira a chave secreta de administração.', 'error');
+                return;
+            }
+
+            updateMessage(adminMessageAreaGenerate, 'Iniciando geração de cards via Gemini...', 'info');
+            generateBulkButton.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/generate-bulk`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminKey}` 
+                    },
+                    body: JSON.stringify({ languageNames: languageNames })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    updateMessage(adminMessageAreaGenerate, `Erro de geração: ${result.error || 'Falha desconhecida'}`, 'error');
+                    console.error('Erro de geração em massa:', result.error);
+                } else {
+                    let successCount = (result.successful && result.successful.length !== undefined) ? result.successful.length : 0;
+                    let failedCount = (result.failed && result.failed.length !== undefined) ? result.failed.length : 0;
+                    let successMessage = `Geração concluída: ${successCount} cards processados.`;
+                    if (failedCount > 0) {
+                        successMessage += ` ${failedCount} falharam. Verifique o console do servidor para mais detalhes.`;
+                        updateMessage(adminMessageAreaGenerate, successMessage, 'warning'); 
+                    } else {
+                        updateMessage(adminMessageAreaGenerate, successMessage, 'success');
+                    }
+                }
+            } catch (error) {
+                updateMessage(adminMessageAreaGenerate, `Erro de rede ou servidor: ${error.message}. Verifique se o servidor Node.js está rodando.`, 'error');
+                console.error('Erro na requisição de geração em massa:', error);
+            } finally {
+                generateBulkButton.disabled = false;
+            }
+        });
+
+        // Event Listener para Upload CSV
+        uploadCsvButton.addEventListener('click', async () => {
+            const csvData = csvDataInput.value.trim();
+            const adminKey = adminSecretKeyInput.value.trim();
+
+            if (!csvData) {
+                updateMessage(adminMessageAreaCsvUpload, 'Por favor, cole o conteúdo CSV.', 'error');
+                return;
+            }
+
+            if (!adminKey) {
+                updateMessage(adminMessageAreaCsvUpload, 'Por favor, insira a chave secreta de administração.', 'error');
+                return;
+            }
+
+            updateMessage(adminMessageAreaCsvUpload, 'Enviando CSV para o servidor e iniciando geração...', 'info');
+            uploadCsvButton.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/upload-csv`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', // Enviamos como JSON, com a string CSV dentro
+                        'Authorization': `Bearer ${adminKey}` 
+                    },
+                    body: JSON.stringify({ csvData: csvData }) // Envia o CSV como uma propriedade de um objeto JSON
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    updateMessage(adminMessageAreaCsvUpload, `Erro de upload CSV: ${result.error || 'Falha desconhecida'}`, 'error');
+                    console.error('Erro de upload CSV:', result.error);
+                } else {
+                    let successCount = (result.successful && result.successful.length !== undefined) ? result.successful.length : 0;
+                    let failedCount = (result.failed && result.failed.length !== undefined) ? result.failed.length : 0;
+                    let successMessage = `Upload CSV concluído: ${successCount} cards adicionados/atualizados.`;
+                    if (failedCount > 0) {
+                        successMessage += ` ${failedCount} falharam. Verifique o console do servidor para mais detalhes.`;
+                        updateMessage(adminMessageAreaCsvUpload, successMessage, 'warning'); 
+                    } else {
+                        updateMessage(adminMessageAreaCsvUpload, successMessage, 'success');
+                    }
+                }
+            } catch (error) {
+                updateMessage(adminMessageAreaCsvUpload, `Erro de rede ou servidor: ${error.message}. Verifique se o servidor Node.js está rodando.`, 'error');
+                console.error('Erro na requisição de upload CSV:', error);
+            } finally {
+                uploadCsvButton.disabled = false;
+            }
+        });
+
+
+        backToHomeButton.addEventListener('click', () => {
+            window.location.href = '/index.html';
+        });
+    </script>
+</body>
+</html>

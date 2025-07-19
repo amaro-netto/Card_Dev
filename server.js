@@ -17,7 +17,6 @@ const PORT = process.env.PORT || 3000; // Porta do servidor, ou 3000 por padrão
 
 // ATENÇÃO: Duas chaves de API agora (Gemini e Replicate)!
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Para modelos de texto (Gemini)
-
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN; // Para modelos de imagem (Replicate)
 
 // Verifica se as chaves da API estão configuradas
@@ -87,13 +86,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
 app.use(cors()); // Permite requisições de diferentes origens (necessário para frontend local)
 app.use(bodyParser.json({ limit: '10mb' })); // Suporta JSON bodies, com limite maior para Base64
 
-// Serve o index.html diretamente da raiz do projeto
-app.use(express.static(__dirname)); 
-// Serve a pasta public/ para assets como imagens e ícones
-app.use('/public', express.static(path.join(__dirname, 'public'))); 
-
-
-// --- Funções para interagir com as APIs Gemini (no backend) ---
+// --- FUNÇÕES DE LÓGICA DO BACKEND ---
 
 /**
  * Chama a API Gemini para gerar dados de texto para um card.
@@ -146,7 +139,7 @@ Caso contrário, defina 'isValidLanguage' como false e os outros campos podem se
         }
     };
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`; // USANDO GEMINI_API_KEY AQUI
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`; 
 
     try {
         const response = await fetch(apiUrl, {
@@ -236,8 +229,8 @@ async function generateImageFromReplicate(prompt) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${REPLICATE_API_TOKEN}`, // ALTERADO PARA 'Bearer' AQUI
-                'Prefer': 'wait' // Adicionado cabeçalho Prefer: wait
+                'Authorization': `Bearer ${REPLICATE_API_TOKEN}`, 
+                'Prefer': 'wait' 
             },
             body: JSON.stringify(payload)
         });
@@ -263,7 +256,7 @@ async function generateImageFromReplicate(prompt) {
             while (status === 'starting' || status === 'processing' || status === 'queued' && attempt < maxAttempts) {
                 await new Promise(res => setTimeout(res, delay));
                 const statusResponse = await fetch(initialResult.urls.get, {
-                    headers: { 'Authorization': `Bearer ${REPLICATE_API_TOKEN}` } // ALTERADO PARA 'Bearer' AQUI TAMBÉM
+                    headers: { 'Authorization': `Bearer ${REPLICATE_API_TOKEN}` } 
                 });
 
                 if (!statusResponse.ok) {
@@ -312,6 +305,42 @@ async function generateImageFromReplicate(prompt) {
 
 
 /**
+ * Função auxiliar para inserir/atualizar um único card no banco de dados.
+ * @param {Object} cardData - Os dados do card a ser salvo.
+ * @returns {Promise<boolean>} True se o card foi salvo com sucesso, false caso contrário.
+ */
+async function saveCardToDb(cardData) {
+    return new Promise((resolve) => {
+        const stmt = db.prepare(`REPLACE INTO cards (name, type, description, pwr, vel, flx, com, crv, imagePrompt, imageUrl, iconUrl, isValidLanguage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+        stmt.run(
+            cardData.name,
+            cardData.type,
+            cardData.description,
+            cardData.pwr,
+            cardData.vel,
+            cardData.flx,
+            cardData.com,
+            cardData.crv,
+            cardData.imagePrompt,
+            cardData.imageUrl,
+            cardData.iconUrl,
+            cardData.isValidLanguage ? 1 : 0,
+            function(insertErr) {
+                if (insertErr) {
+                    console.error(`ERRO DB: Erro ao inserir/atualizar card '${cardData.name}' no DB:`, insertErr.message);
+                    resolve(false);
+                } else {
+                    console.log(`SUCESSO DB: Card '${cardData.name}' salvo/atualizado no DB.`);
+                    resolve(true);
+                }
+            }
+        );
+        stmt.finalize();
+    });
+}
+
+
+/**
  * Processa a atualização de um card específico (ou tenta gerá-lo se não existir).
  * Esta função contém a lógica compartilhada para gerar/atualizar cards.
  * @param {string} languageName - O nome da linguagem a ser processada.
@@ -337,7 +366,6 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
     let generatedBase64ImageUrl = null;
     if (forceImageRegeneration || !fs.existsSync(imageFilePath)) {
         console.log(`INFO: Iniciando geração/regeneration de imagem para '${normalizedLanguageName}' via Replicate...`);
-        // Mude esta linha para chamar a nova função
         generatedBase64ImageUrl = await generateImageFromReplicate(cardData.imagePrompt); 
     } else {
         console.log(`INFO: Imagem para '${normalizedLanguageName}' já existe e regeração não forçada. Usando a imagem existente.`);
@@ -374,53 +402,30 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
         console.log(`INFO: Ícone local para '${normalizedLanguageName}' não encontrado. O frontend usará um SVG default.`);
     }
 
-
-    // 5. Salvar/Atualizar o card no banco de dados SQLite
-    return new Promise((resolve, reject) => {
-        // REPLACE INTO: Insere se não existe, atualiza se existe (baseado na PRIMARY KEY 'name')
-        const stmt = db.prepare(`REPLACE INTO cards (name, type, description, pwr, vel, flx, com, crv, imagePrompt, imageUrl, iconUrl, isValidLanguage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-        stmt.run(
-            normalizedLanguageName,
-            cardData.type,
-            cardData.description,
-            cardData.stats.pwr,
-            cardData.stats.vel,
-            cardData.stats.flx,
-            cardData.stats.com,
-            cardData.stats.crv,
-            cardData.imagePrompt,
-            imageUrlToSave,
-            iconUrlToSave,
-            cardData.isValidLanguage ? 1 : 0, // SQLite não tem booleano nativo, usa 0 ou 1
-            function(insertErr) {
-                if (insertErr) {
-                    console.error('ERRO DB: Erro ao inserir/atualizar card no DB:', insertErr.message);
-                    return reject({ success: false, error: insertErr.message });
-                }
-                const processedCard = {
-                    name: normalizedLanguageName,
-                    type: cardData.type,
-                    description: cardData.description,
-                    pwr: cardData.stats.pwr,
-                    vel: cardData.stats.vel,
-                    flx: cardData.stats.flx,
-                    com: cardData.stats.com,
-                    crv: cardData.stats.crv,
-                    imagePrompt: cardData.imagePrompt,
-                    imageUrl: imageUrlToSave,
-                    iconUrl: iconUrlToSave, // Inclui a URL do ícone no retorno
-                    isValidLanguage: cardData.isValidLanguage
-                };
-                console.log(`SUCESSO: Card para '${normalizedLanguageName}' processado e salvo no DB.`);
-                resolve({ success: true, card: processedCard, message: `Card para '${normalizedLanguageName}' processado com sucesso!` });
-            }
-        );
-        stmt.finalize();
-    });
+    // Retornar o card processado para que possa ser salvo posteriormente
+    return {
+        success: true,
+        card: {
+            name: normalizedLanguageName,
+            type: cardData.type,
+            description: cardData.description,
+            pwr: cardData.stats.pwr,
+            vel: cardData.stats.vel,
+            flx: cardData.stats.flx,
+            com: cardData.stats.com,
+            crv: cardData.stats.crv,
+            imagePrompt: cardData.imagePrompt, 
+            imageUrl: imageUrlToSave,
+            iconUrl: iconUrlToSave,
+            isValidLanguage: cardData.isValidLanguage
+        },
+        message: `Card para '${normalizedLanguageName}' processado com sucesso!`
+    };
 }
 
 
-// --- Rotas da API ---
+// --- ROTAS DA API ---
+// É CRUCIAL QUE AS ROTAS DA API VENHAM ANTES DOS ARQUIVOS ESTÁTICOS!
 
 // Rota para obter todos os cards
 app.get('/api/cards', (req, res) => {
@@ -459,7 +464,13 @@ app.post('/api/cards', async (req, res) => {
         const result = await processCardUpdate(normalizedLanguageName, true); // Força regeneração da imagem para novos cards
 
         if (result.success) {
-            res.status(201).json({ message: result.message, card: result.card });
+            // Salvar o card no DB após o processamento bem-sucedido
+            const saved = await saveCardToDb(result.card);
+            if (saved) {
+                res.status(201).json({ message: result.message, card: result.card });
+            } else {
+                res.status(500).json({ error: "Erro ao salvar o card no banco de dados após o processamento." });
+            }
         } else {
             res.status(400).json({ error: result.error, isValidLanguage: result.isValidLanguage });
         }
@@ -467,7 +478,7 @@ app.post('/api/cards', async (req, res) => {
 });
 
 
-// NOVA ROTA: Rota para atualizar cards existentes (um específico ou todos)
+// Rota para atualizar cards existentes (um específico ou todos)
 app.post('/api/cards/update', async (req, res) => {
     const { languageName } = req.body; // Pode ser undefined para atualizar todos
 
@@ -478,7 +489,13 @@ app.post('/api/cards/update', async (req, res) => {
             const result = await processCardUpdate(languageName, true); // Força regeneração de imagem
 
             if (result.success) {
-                res.status(200).json({ message: result.message, card: result.card });
+                // Salvar o card no DB após o processamento bem-sucedido
+                const saved = await saveCardToDb(result.card);
+                if (saved) {
+                    res.status(200).json({ message: result.message, card: result.card });
+                } else {
+                    res.status(500).json({ error: "Erro ao salvar o card no banco de dados após a atualização." });
+                }
             } else {
                 res.status(400).json({ error: result.error, isValidLanguage: result.isValidLanguage });
             }
@@ -494,22 +511,25 @@ app.post('/api/cards/update', async (req, res) => {
                 return res.status(500).json({ error: err.message });
             }
 
-            const updatePromises = rows.map(row => processCardUpdate(row.name, true)); // Força regerar imagem para todos
+            const updatePromises = rows.map(async (row) => { 
+                const result = await processCardUpdate(row.name, true); // Força regerar imagem para todos
+                if (result.success) {
+                    await saveCardToDb(result.card); // Salvar cada card após processamento
+                }
+                return result; 
+            });
 
             try {
-                // Use Promise.allSettled para que todas as promessas sejam executadas,
-                // mesmo que algumas falhem, e você possa ver os resultados de todas.
                 const results = await Promise.allSettled(updatePromises);
 
                 const successfulUpdates = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value.card.name);
                 const failedUpdates = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success));
 
-                console.log(`INFO: Atualização em massa concluída. Sucessos: ${successfulUpdates.length}, Falhas: ${failedUpdates.length}`);
+                console.log(`INFO: Atualização em massa concluída. Sucessos: ${successfulUpdates.length}, Falhas: ${failedUpdates.length}.`);
 
                 res.status(200).json({
-                    message: `Processo de atualização em massa concluído. ${successfulUpdates.length} cards atualizados.`,
+                    message: `Processamento de atualização em massa concluído. ${successfulUpdates.length} cards adicionados/atualizados.`,
                     successful: successfulUpdates,
-                    // Mapeia os motivos das falhas de forma mais clara
                     failed: failedUpdates.map(r => r.status === 'rejected' ? r.reason.message || r.reason : r.value.error)
                 });
             } catch (error) {
@@ -518,6 +538,150 @@ app.post('/api/cards/update', async (req, res) => {
             }
         });
     }
+});
+
+
+// REMOVIDA: Rota para upload em massa de cards (JSON fornecido) - Não será mais usada
+
+
+// Rota para gerar dados de texto em massa via IA (Gemini)
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'your_super_secret_admin_key'; 
+
+app.post('/api/admin/generate-bulk', async (req, res) => {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || authHeader !== `Bearer ${ADMIN_SECRET}`) {
+        return res.status(401).json({ error: 'Acesso não autorizado. Chave de administração inválida.' });
+    }
+
+    const languageNamesString = req.body.languageNames; // Nomes separados por vírgula
+
+    if (!languageNamesString || typeof languageNamesString !== 'string' || languageNamesString.trim() === '') {
+        return res.status(400).json({ error: 'Nomes de linguagens para geração em massa são obrigatórios e devem ser uma string separada por vírgula.' });
+    }
+
+    // Dividir a string por vírgula, remover espaços extras e filtrar vazios
+    const namesArray = languageNamesString.split(',')
+                                         .map(name => name.trim())
+                                         .filter(name => name.length > 0);
+
+    if (namesArray.length === 0) {
+        return res.status(400).json({ error: 'Nenhum nome de linguagem válido fornecido após a separação por vírgula.' });
+    }
+
+    console.log(`INFO: Recebida solicitação de geração em massa para ${namesArray.length} linguagens via Gemini: ${namesArray.join(', ')}`);
+
+    const results = [];
+    for (const name of namesArray) {
+        try {
+            const processResult = await processCardUpdate(name, false); 
+
+            if (processResult.success) {
+                const saved = await saveCardToDb(processResult.card); // Salvar o card processado no DB
+                if (saved) {
+                    results.push({ name: name, success: true, message: processResult.message });
+                } else {
+                    results.push({ name: name, success: false, error: "Erro ao salvar card no DB após geração Gemini." });
+                }
+            } else {
+                results.push({ name: name, success: false, error: processResult.error || "Erro desconhecido na geração Gemini." });
+            }
+        } catch (error) {
+            console.error(`ERRO: Falha crítica ao processar a geração em massa para '${name}':`, error);
+            results.push({ name: name, success: false, error: `Exceção durante o processamento: ${error.message}` });
+        }
+    }
+
+    const successfulCount = results.filter(r => r.success).length;
+    const failedCount = results.filter(r => !r.success).length;
+
+    console.log(`INFO: Geração em massa via Gemini concluída. Sucessos: ${successfulCount}, Falhas: ${failedCount}.`);
+    res.status(200).json({
+        message: `Processamento de geração em massa concluído. ${successfulCount} cards adicionados/atualizados.`,
+        successful: results.filter(r => r.success).map(r => r.name),
+        failed: results.filter(r => !r.success)
+    });
+});
+
+
+// REMOVIDA: Rota para carregar linguagens de um JSON local e iniciar geração em massa - Não será mais usada
+// REMOVIDA: getLanguageNamesFromJson() - Não será mais usada
+
+
+// NOVA ROTA: Rota para upload de CSV e geração em massa
+app.post('/api/admin/upload-csv', async (req, res) => {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || authHeader !== `Bearer ${ADMIN_SECRET}`) {
+        return res.status(401).json({ error: 'Acesso não autorizado. Chave de administração inválida.' });
+    }
+
+    const csvContent = req.body.csvData; // Espera o conteúdo CSV como uma string no body.csvData
+
+    if (!csvContent || typeof csvContent !== 'string' || csvContent.trim() === '') {
+        return res.status(400).json({ error: 'Nenhum conteúdo CSV válido fornecido para upload.' });
+    }
+
+    // Dividir o conteúdo CSV em linhas
+    const lines = csvContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+    if (lines.length <= 1) { // Apenas cabeçalho ou vazio
+        return res.status(400).json({ message: 'Conteúdo CSV inválido: precisa de pelo menos um cabeçalho e uma linha de dados.' });
+    }
+
+    const header = lines[0].split(',').map(h => h.trim());
+    const languageNameColumnIndex = header.indexOf('ProgrammingLanguage'); // Encontra o índice da coluna
+
+    if (languageNameColumnIndex === -1) {
+        return res.status(400).json({ error: 'Coluna "ProgrammingLanguage" não encontrada no cabeçalho do CSV.' });
+    }
+
+    const languageNames = [];
+    for (let i = 1; i < lines.length; i++) {
+        const columns = lines[i].split(',').map(c => c.trim());
+        if (columns.length > languageNameColumnIndex) {
+            const langName = columns[languageNameColumnIndex];
+            if (langName) {
+                languageNames.push(langName);
+            }
+        }
+    }
+
+    if (languageNames.length === 0) {
+        return res.status(200).json({ message: 'Nenhum nome de linguagem encontrado no CSV após a análise.' });
+    }
+
+    console.log(`INFO: Recebida solicitação de upload de CSV para ${languageNames.length} linguagens.`);
+
+    const results = [];
+    for (const name of languageNames) {
+        try {
+            // Chamamos processCardUpdate, mas forceImageRegeneration é false para não gerar imagens agora.
+            const processResult = await processCardUpdate(name, false); 
+
+            if (processResult.success) {
+                const saved = await saveCardToDb(processResult.card);
+                if (saved) {
+                    results.push({ name: name, success: true, message: processResult.message });
+                } else {
+                    results.push({ name: name, success: false, error: "Erro ao salvar card no DB após geração Gemini." });
+                }
+            } else {
+                results.push({ name: name, success: false, error: processResult.error || "Erro desconhecido na geração Gemini." });
+            }
+        } catch (error) {
+            console.error(`ERRO: Falha crítica ao processar a geração para '${name}' a partir do CSV:`, error);
+            results.push({ name: name, success: false, error: `Exceção durante o processamento: ${error.message}` });
+        }
+    }
+
+    const successfulCount = results.filter(r => r.success).length;
+    const failedCount = results.filter(r => !r.success).length;
+
+    console.log(`INFO: Geração de cards a partir do CSV concluída. Sucessos: ${successfulCount}, Falhas: ${failedCount}.`);
+    res.status(200).json({
+        message: `Geração de cards a partir do CSV concluída. ${successfulCount} cards adicionados/atualizados.`,
+        successful: results.filter(r => r.success).map(r => r.name),
+        failed: results.filter(r => !r.success)
+    });
 });
 
 
@@ -536,9 +700,15 @@ app.delete('/api/cards/:name', (req, res) => {
 });
 
 
+// As rotas estáticas devem vir POR ÚLTIMO para não interceptar as chamadas da API
+app.use(express.static(__dirname)); 
+app.use('/public', express.static(path.join(__dirname, 'public'))); 
+
+
 // Inicia o servidor
 app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
     console.log(`Para acessar o frontend principal, abra http://localhost:${PORT}/index.html no seu navegador.`);
     console.log(`Para acessar a coleção, abra http://localhost:${PORT}/collection.html no seu navegador.`);
+    console.log(`Para acessar a página de administração de upload, abra http://localhost:${PORT}/admin.html no seu navegador.`);
 });
