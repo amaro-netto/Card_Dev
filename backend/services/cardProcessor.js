@@ -22,6 +22,22 @@ function normalizeForFileName(name) {
     return name.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+/**
+ * Procura por um arquivo de imagem existente em diferentes formatos (WebP, PNG, JPEG).
+ * @param {string} baseFileName - O nome base do arquivo (sem extensão).
+ * @returns {string|null} O caminho relativo para a imagem se encontrada, ou null.
+ */
+function findExistingImageFile(baseFileName) {
+    const formats = ['webp', 'png', 'jpeg', 'jpg']; // Ordem de preferência de busca
+    for (const format of formats) {
+        const filePath = path.join(IMAGES_DIR, `${baseFileName}.${format}`);
+        if (fs.existsSync(filePath)) {
+            console.log(`INFO: Imagem local existente encontrada: /public/images/${baseFileName}.${format}`);
+            return `/public/images/${baseFileName}.${format}`;
+        }
+    }
+    return null;
+}
 
 /**
  * Processa a atualização de um card específico (ou tenta gerá-lo se não existir).
@@ -33,6 +49,9 @@ function normalizeForFileName(name) {
 async function processCardUpdate(languageName, forceImageRegeneration = false) {
     const normalizedLanguageName = languageName.charAt(0).toUpperCase() + languageName.slice(1).toLowerCase();
     const fileNameBase = normalizeForFileName(normalizedLanguageName); // Nome base seguro para arquivo
+    
+    let imageUrlToSave = `/public/images/placeholder.png`; 
+    let imageFormat = 'png'; // Formato padrão caso a imagem seja placeholder ou erro.
 
     // 1. Gerar dados de texto do card via Gemini (sempre com o prompt mais recente)
     const cardData = await geminiService.getCardDataFromGemini(normalizedLanguageName);
@@ -41,25 +60,29 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
         return { success: false, error: `"${normalizedLanguageName}" não é uma tecnologia de desenvolvimento, linguagem, framework, ferramenta, plataforma, ambiente ou conceito relevante na área de TI reconhecível.`, isValidLanguage: false };
     }
 
-    cardData.name = normalizedLanguageName; 
-    let imageUrlToSave = `/public/images/placeholder.png`; 
-    const imageFileName = `${fileNameBase}.png`; // Usa o nome de arquivo normalizado
-    const imageFilePath = path.join(IMAGES_DIR, imageFileName);
+    // 2. Tentar usar imagem existente ou gerar
+    let generatedImageResult = null; // Agora pode ser { base64Data, format } ou null
 
-    // 2. Gerar imagem via Replicate (Base64) ou usar existente se não for forçado
-    let generatedBase64ImageUrl = null;
-    if (forceImageRegeneration || !fs.existsSync(imageFilePath)) {
-        console.log(`INFO: Iniciando geração/regeneration de imagem para '${normalizedLanguageName}' via Replicate...`);
-        generatedBase64ImageUrl = await replicateService.generateImageFromReplicate(cardData.imagePrompt); 
+    if (forceImageRegeneration) { // Se forçar regeneração, ignora arquivo existente
+        console.log(`INFO: Regeneração forçada para '${normalizedLanguageName}'. Iniciando geração via Replicate...`);
+        generatedImageResult = await replicateService.generateImageFromReplicate(cardData.imagePrompt);
     } else {
-        console.log(`INFO: Imagem para '${normalizedLanguageName}' já existe e regeração não forçada. Usando a imagem existente.`);
-        imageUrlToSave = `/public/images/${imageFileName}`; 
+        // Tenta encontrar um arquivo existente em qualquer formato
+        const existingImageUrl = findExistingImageFile(fileNameBase);
+        if (existingImageUrl) {
+            imageUrlToSave = existingImageUrl; // Usa a URL do arquivo encontrado
+            console.log(`INFO: Imagem para '${normalizedLanguageName}' já existe. Usando: ${imageUrlToSave}`);
+        } else {
+            console.log(`INFO: Imagem para '${normalizedLanguageName}' não encontrada localmente. Iniciando geração via Replicate...`);
+            generatedImageResult = await replicateService.generateImageFromReplicate(cardData.imagePrompt);
+        }
     }
 
-
-    if (generatedBase64ImageUrl) {
-        // 3. Salvar imagem localmente no diretório public/images
-        const base64Data = generatedBase64ImageUrl.replace(/^data:image\/\w+;base64,/, "");
+    if (generatedImageResult) { // Se uma imagem foi gerada (ou regerada)
+        const { base64Data, format } = generatedImageResult;
+        imageFormat = format; // Atualiza o formato com o que foi gerado
+        const imageFileName = `${fileNameBase}.${format}`; // Nome do arquivo com a extensão correta
+        const imageFilePath = path.join(IMAGES_DIR, imageFileName);
 
         try {
             fs.writeFileSync(imageFilePath, base64Data, 'base64');
@@ -67,11 +90,11 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
             console.log(`SUCESSO: Imagem salva localmente: ${imageUrlToSave}`);
         } catch (fileError) {
             console.error("ERRO: Erro ao salvar imagem localmente:", fileError);
+            imageUrlToSave = `/public/images/placeholder.png`; // Fallback para placeholder em caso de falha de salvamento
         }
-    } else if (forceImageRegeneration && !fs.existsSync(imageFilePath)) { 
-        console.warn(`AVISO: Não foi possível regerar imagem para '${normalizedLanguageName}'. Usando placeholder.`);
+    } else if (imageUrlToSave === `/public/images/placeholder.png`) { // Se não gerou e não encontrou existente, ou falhou
+        console.warn(`AVISO: Não foi possível gerar ou encontrar imagem para '${normalizedLanguageName}'. Usando placeholder.`);
     }
-
 
     // 4. Verificar se um ícone local existe, caso contrário, usar um fallback.
     const iconFileName = `${fileNameBase}.svg`; // Usa o nome de arquivo normalizado para ícone

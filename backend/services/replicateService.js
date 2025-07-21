@@ -1,5 +1,4 @@
 // backend/services/replicateService.js
-// REMOVIDA: const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const path = require('path');
 const fs = require('fs'); 
 const { REPLICATE_API_TOKEN } = require('../main'); 
@@ -10,7 +9,7 @@ const IMAGES_DIR = path.join(__dirname, '../../public', 'images');
 /**
  * Chama a API do Replicate para gerar uma imagem em Base64 usando Stable Diffusion.
  * @param {string} prompt - Prompt para a geração da imagem.
- * @returns {Promise<string|null>} Imagem Base64 (data URL) ou null em caso de erro.
+ * @returns {Promise<Object|null>} Retorna um objeto { base64Data: string, format: string } ou null em caso de erro.
  */
 async function generateImageFromReplicate(prompt) { 
     // Verifica se a chave da API está configurada
@@ -96,12 +95,23 @@ async function generateImageFromReplicate(prompt) {
 
             if (imageUrl) {
                 console.log("DEBUG: Imagem gerada no Replicate. URL:", imageUrl);
-                // O Replicate retorna uma URL de imagem direta, não um Base64.
-                // Precisamos buscar essa imagem e convertê-la para Base64.
+                // O Replicate retorna uma URL de imagem direta. Precisamos buscar essa imagem
+                // e inferir o formato para retornar tanto o base64 quanto o formato.
                 const imageResponse = await fetch(imageUrl);
-                const imageBuffer = await imageResponse.buffer(); // Obter a imagem como Buffer
+
+                // Obtém o Content-Type do cabeçalho da resposta para inferir o formato
+                const contentType = imageResponse.headers.get('content-type');
+                let format = 'png'; // Fallback padrão
+                if (contentType && contentType.includes('image/webp')) {
+                    format = 'webp';
+                } else if (contentType && contentType.includes('image/jpeg')) {
+                    format = 'jpeg';
+                }
+
+                const imageBuffer = await imageResponse.buffer(); 
                 const base64Data = imageBuffer.toString('base64');
-                return `data:image/png;base64,${base64Data}`;
+                
+                return { base64Data: base64Data, format: format }; // Retorna o base64 E o formato inferido
 
             } else {
                 console.error("ERRO: Não foi possível obter a URL da imagem do Replicate após várias tentativas ou status inesperado.");
