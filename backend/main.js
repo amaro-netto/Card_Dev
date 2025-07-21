@@ -7,7 +7,6 @@ const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 
 // Define global.fetch para que o fetch nativo do Node.js seja acessível em outros módulos CommonJS
-// Isso resolve o SyntaxError: await is only valid... em módulos CJS que usam fetch
 global.fetch = require('node-fetch'); // Usamos o node-fetch aqui no main.js e o tornamos global
 
 

@@ -106,18 +106,14 @@
             if (lowerCaseType.includes("marcação") || lowerCaseType.includes("markup") || lowerCaseType.includes("estilo") || lowerCaseType.includes("stylesheet") || lowerCaseType.includes("frontend markup") || lowerCaseType.includes("web standard") || lowerCaseType.includes("document structure") || lowerCaseType.includes("layout")) {
                 return "marcacao_estilo";
             }
-            // REMOVIDA A CATEGORIA MOBILE DA FILTRAGEM (mantém compatibilidade se dados existirem, mas não tem botão)
-            // if (lowerCaseType.includes("mobile") || lowerCaseType.includes("android") || lowerCaseType.includes("ios") || lowerCaseType.includes("cross-platform") || lowerCaseType.includes("react native") || lowerCaseType.includes("flutter") || lowerCaseType.includes("xamarin")) {
-            //     return "mobile";
-            // }
-            // REMOVIDA A CATEGORIA OTHER DA FILTRAGEM
-            // return "other"; 
-            
-            // Retorna 'other' por padrão se nenhuma categoria corresponder após a remoção de 'mobile' e 'other' como botões
-            return "api_plataforma"; // Redireciona "outros" para "API & Plataforma" ou qualquer categoria existente.
-                                     // Ou pode criar um "default" customizado se a categoria original não for mais usada.
-                                     // Por simplicidade, vamos deixar as lógicas específicas e o 'other' como fallback final.
-                                     // Se os botões forem removidos, os cards dessas categorias ainda serão exibidos em "Todos".
+            // As categorias 'mobile' e 'other' não têm mais botões de filtro,
+            // mas os cards ainda serão exibidos em "Todos" ou em categorias correspondentes.
+            // Se um card tiver type "mobile" ou "other", ele não será filtrado pelos botões existentes.
+            // Para garantir que eles sejam mostrados apenas em 'Todos'
+            // ou redirecionados para 'api_plataforma' ou 'other' default:
+            if (lowerCaseType.includes("mobile")) return "api_plataforma"; // Redireciona mobile para api_plataforma
+            return "api_plataforma"; // Retorna 'api_plataforma' para qualquer outro tipo não mapeado.
+                                     // Ou pode ser 'other' se você quiser uma categoria genérica "sobra".
         };
 
 
@@ -248,10 +244,6 @@
                     <span>Ilustração: Amaro AI</span>
                     </div>
             `;
-            // Removida toda a lógica e event listener do updateButton
-            // const updateButton = cardDiv.querySelector('.update-card-button');
-            // if (updateButton) { ... }
-
             return cardDiv;
         };
 

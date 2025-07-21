@@ -1,5 +1,4 @@
 // backend/services/cardProcessor.js
-// REMOVIDA: const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const geminiService = require('./geminiService'); 
 const replicateService = require('./replicateService'); 
 const dbService = require('./dbService'); 
@@ -11,7 +10,18 @@ const IMAGES_DIR = path.join(__dirname, '../../public', 'images');
 const ICONS_DIR = path.join(__dirname, '../../public', 'icons');   
 
 // Atraso entre as requisições Gemini para evitar limites de cota
-const GEMINI_REQUEST_DELAY_MS = 2000; // Atraso de 2 segundos (2000 ms)
+const GEMINI_REQUEST_DELAY_MS = 2000; 
+
+/**
+ * Normaliza um nome de linguagem para um formato de nome de arquivo seguro.
+ * Remove caracteres não alfanuméricos e converte para minúsculas.
+ * @param {string} name - O nome da linguagem original.
+ * @returns {string} O nome de arquivo normalizado.
+ */
+function normalizeForFileName(name) {
+    return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 
 /**
  * Processa a atualização de um card específico (ou tenta gerá-lo se não existir).
@@ -22,6 +32,7 @@ const GEMINI_REQUEST_DELAY_MS = 2000; // Atraso de 2 segundos (2000 ms)
  */
 async function processCardUpdate(languageName, forceImageRegeneration = false) {
     const normalizedLanguageName = languageName.charAt(0).toUpperCase() + languageName.slice(1).toLowerCase();
+    const fileNameBase = normalizeForFileName(normalizedLanguageName); // Nome base seguro para arquivo
 
     // 1. Gerar dados de texto do card via Gemini (sempre com o prompt mais recente)
     const cardData = await geminiService.getCardDataFromGemini(normalizedLanguageName);
@@ -32,7 +43,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
 
     cardData.name = normalizedLanguageName; 
     let imageUrlToSave = `/public/images/placeholder.png`; 
-    const imageFileName = `${normalizedLanguageName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`; 
+    const imageFileName = `${fileNameBase}.png`; // Usa o nome de arquivo normalizado
     const imageFilePath = path.join(IMAGES_DIR, imageFileName);
 
     // 2. Gerar imagem via Replicate (Base64) ou usar existente se não for forçado
@@ -63,7 +74,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
 
 
     // 4. Verificar se um ícone local existe, caso contrário, usar um fallback.
-    const iconFileName = `${normalizedLanguageName.toLowerCase().replace(/[^a-z0-9]/g, '')}.svg`;
+    const iconFileName = `${fileNameBase}.svg`; // Usa o nome de arquivo normalizado para ícone
     const iconFilePath = path.join(ICONS_DIR, iconFileName);
     let iconUrlToSave = ''; 
 
