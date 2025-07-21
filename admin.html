@@ -21,7 +21,7 @@
         }
 
         .admin-container {
-            max-width: 900px;
+            max-width: 900px; /* Aumentado um pouco para acomodar o menu */
             margin: 40px auto;
             padding: 25px;
             background-color: #ffffff;
@@ -445,9 +445,9 @@
         // Elementos para Atualizar Card Individualmente
         const singleLanguageInput = document.getElementById('singleLanguageInput');
         const searchSingleCardButton = document.getElementById('searchSingleCardButton');
-        const singleCardContainer = document.getElementById('singleCardContainer'); // Renomeado para evitar conflito com singleCardDisplayAdmin CSS
+        const singleCardContainer = document.getElementById('singleCardContainer'); 
         const adminMessageAreaSingle = document.getElementById('adminMessageAreaSingle'); 
-        const updateSingleCardButton = document.getElementById('updateSingleCardButton'); // Novo botão externo
+        const updateSingleCardButton = document.getElementById('updateSingleCardButton'); 
 
 
         // Elemento da Chave Secreta (compartilhado)
@@ -463,6 +463,118 @@
             areaElement.textContent = message;
             areaElement.className = 'admin-message-area ' + type;
         };
+
+        /**
+         * Adapta o tamanho da fonte de um elemento para que seu texto caiba no contêiner.
+         * @param {HTMLElement} element - O elemento HTML cujo texto será ajustado.
+         * @param {number} maxFontSizePx - O tamanho máximo da fonte em pixels.
+         * @param {number} minFontSizePx - O tamanho mínimo da fonte em pixels.
+         * @param {number} [maxLines=1] - O número máximo de linhas permitidas (para texto multilinha).
+         */
+        const fitTextToContainer = (element, maxFontSizePx, minFontSizePx, maxLines = 1) => {
+            let currentFontSize = maxFontSizePx;
+            element.style.fontSize = `${currentFontSize}px`;
+            element.style.overflow = 'visible';
+            element.style.whiteSpace = 'normal';
+
+            while (currentFontSize > minFontSizePx) {
+                let overflows = false;
+                if (maxLines === 1) {
+                    if (element.scrollWidth > element.clientWidth) {
+                        overflows = true;
+                    }
+                } else {
+                    if (element.scrollHeight > element.clientHeight) {
+                        overflows = true;
+                    }
+                }
+                if (overflows) {
+                    currentFontSize -= 0.5;
+                    element.style.fontSize = `${currentFontSize}px`;
+                } else {
+                    break;
+                }
+            }
+            if (maxLines === 1) {
+                element.style.overflow = 'hidden';
+                element.style.whiteSpace = 'nowrap';
+                element.style.textOverflow = 'ellipsis';
+            } else {
+                element.style.overflow = 'hidden';
+                element.style.whiteSpace = 'normal';
+            }
+        };
+
+        /**
+         * Cria e retorna um elemento HTML de cartão de linguagem para o ADMIN.
+         * Não inclui o botão de atualização individual em seu HTML, pois ele é externo.
+         * @param {Object} cardData - Os dados do cartão.
+         * @returns {HTMLElement} O elemento div do cartão.
+         */
+        const createCardElementAdmin = (cardData) => {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card-container'; 
+            cardDiv.dataset.languageName = cardData.name; 
+
+            // Adaptação para o tema
+            const theme = getLanguageTheme(cardData.name); 
+            for (const [prop, value] of Object.entries(theme)) {
+                cardDiv.style.setProperty(prop, value);
+            }
+
+            let iconHtmlContent = '';
+            if (cardData.iconUrl) {
+                iconHtmlContent = `<img class="card-logo-svg" src="${API_BASE_URL}${cardData.iconUrl}" alt="${cardData.name} Icon">`;
+            } else {
+                const defaultSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>';
+                iconHtmlContent = `<svg class="card-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>${cardData.name}</title>${defaultSvgPath}</svg>`;
+            }
+            
+            cardDiv.innerHTML = `
+                <div class="card-header">
+                    <div class="card-name-wrapper">
+                        ${iconHtmlContent}
+                        <div class="card-name" data-max-font="1.4" data-min-font="0.8">${cardData.name}</div>
+                    </div>
+                    <div class="card-type" data-max-font="0.8" data-min-font="0.6">${cardData.type}</div>
+                </div>
+                <div class="card-image-wrapper">
+                    <img class="card-image" src="${cardData.imageUrl || API_BASE_URL + '/public/images/placeholder.png'}"
+                        alt="Ilustração do ${cardData.name} como um Personagem Anime">
+                </div>
+                <div class="card-description" data-max-font="0.85" data-min-font="0.6" data-max-lines="4">
+                    ${cardData.description}
+                </div>
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">PWR/</span>
+                        <span class="stat-value">${cardData.pwr !== undefined ? cardData.pwr : '--'}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">| VEL/</span>
+                        <span class="stat-value">${cardData.vel !== undefined ? cardData.vel : '--'}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">| FLX/</span>
+                        <span class="stat-value">${cardData.flx !== undefined ? cardData.flx : '--'}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">| COM/</span>
+                        <span class="stat-value">${cardData.com !== undefined ? cardData.com : '--'}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">| CRV/</span>
+                        <span class="stat-value">${cardData.crv !== undefined ? cardData.crv : '--'}</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span>Ilustração: Amaro AI</span>
+                    </div>
+            `;
+            // Não há mais lógica de botão de atualização aqui dentro do card
+            return cardDiv;
+        };
+
 
         // Lógica de controle do menu
         menuItems.forEach(item => {
@@ -725,7 +837,7 @@
 
             updateMessage(adminMessageAreaSingle, `Buscando card para "${languageName}"...`, 'info');
             searchSingleCardButton.disabled = true;
-            updateSingleCardButton.disabled = true; // Desabilita botão de atualização enquanto busca
+            updateSingleCardButton.disabled = true; 
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/admin/cards/${encodeURIComponent(languageName)}`, {
@@ -741,12 +853,12 @@
                     singleCardContainer.innerHTML = `<p class="text-gray-500">${result.message || 'Card não encontrado.'}</p>`;
                     updateMessage(adminMessageAreaSingle, `Card "${languageName}" não encontrado.`, 'warning');
                     console.error('Erro ao buscar card individual:', result.message || result.error);
-                    updateSingleCardButton.style.display = 'none'; // Esconde o botão se não encontrar
+                    updateSingleCardButton.style.display = 'none'; 
                     currentSingleCardName = null;
                 } else {
-                    singleCardContainer.innerHTML = ''; // Limpa a área
-                    const cardElement = createCardElementAdmin(result); // Cria o card
-                    singleCardContainer.appendChild(cardElement); // Adiciona ao display
+                    singleCardContainer.innerHTML = ''; 
+                    const cardElement = createCardElementAdmin(result); // Chamando a função corretamente
+                    singleCardContainer.appendChild(cardElement); 
 
                     // Ajusta as fontes do card recém-criado
                     const remToPx = parseFloat(window.getComputedStyle(document.documentElement).fontSize);
@@ -759,9 +871,9 @@
                     if (descriptionEl) fitTextToContainer(descriptionEl, parseFloat(descriptionEl.dataset.maxFont) * remToPx, parseFloat(descriptionEl.dataset.minFont) * remToPx, parseInt(descriptionEl.dataset.maxLines, 10));
 
                     updateMessage(adminMessageAreaSingle, `Card para "${languageName}" encontrado.`, 'success');
-                    updateSingleCardButton.style.display = 'block'; // Mostra o botão de atualização individual
-                    updateSingleCardButton.disabled = false; // Habilita o botão
-                    currentSingleCardName = languageName; // Armazena o nome do card buscado
+                    updateSingleCardButton.style.display = 'block'; 
+                    updateSingleCardButton.disabled = false; 
+                    currentSingleCardName = languageName; 
                 }
             } catch (error) {
                 updateMessage(adminMessageAreaSingle, `Erro de rede ou servidor ao buscar card: ${error.message}.`, 'error');
