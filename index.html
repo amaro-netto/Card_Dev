@@ -66,7 +66,8 @@
          */
         const updateMessage = (message, type = 'info') => {
             messageArea.textContent = message;
-            messageArea.className = 'message-area'; // Reset class
+            messageArea.className = 'message-area';
+            // Reset class
             if (type === 'error') {
                 messageArea.classList.add('text-red-600');
             } else if (type === 'success') {
@@ -152,7 +153,7 @@
                 </div>
                 <div class="card-image-wrapper">
                     <img class="card-image" src="${cardData.imageUrl || API_BASE_URL + '/public/images/placeholder.png'}"
-                    alt="Ilustração do ${cardData.name} como um Personagem Anime">
+                        alt="Ilustração do ${cardData.name} como um Personagem Anime">
                 </div>
                 <div class="card-description" data-max-font="0.85" data-min-font="0.6" data-max-lines="4">
                     ${cardData.description}
@@ -278,9 +279,8 @@
                 // Exibe apenas o card encontrado/gerado na área principal
                 renderCards([result.card], singleCardDisplay);
                 
-                // Atualiza a contagem da coleção
-                loadCollectionCount();
-                
+                // **** CORREÇÃO AQUI: Recarrega a contagem da coleção e limpa o input ****
+                loadCollectionCount(); 
                 languageSearchInput.value = '';
 
             } catch (error) {

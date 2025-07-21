@@ -30,9 +30,7 @@
             <button class="filter-button" data-filter="api_plataforma">APIs & Plataformas</button>
             <button class="filter-button" data-filter="marcacao_estilo">Marcação/Estilo</button>
             <button class="filter-button" data-filter="containerization">Containerization</button>
-            <button class="filter-button" data-filter="mobile">Mobile</button>
-            <button class="filter-button" data-filter="other">Outros</button>
-        </div>
+            </div>
     </div>
 
     <div class="collection-section full-height-collection">
@@ -108,16 +106,18 @@
             if (lowerCaseType.includes("marcação") || lowerCaseType.includes("markup") || lowerCaseType.includes("estilo") || lowerCaseType.includes("stylesheet") || lowerCaseType.includes("frontend markup") || lowerCaseType.includes("web standard") || lowerCaseType.includes("document structure") || lowerCaseType.includes("layout")) {
                 return "marcacao_estilo";
             }
-            // Containerization
-            if (lowerCaseType.includes("container") || lowerCaseType.includes("docker") || lowerCaseType.includes("kubernetes") || lowerCaseType.includes("orchestration")) {
-                return "containerization";
-            }
-            // Mobile
-            if (lowerCaseType.includes("mobile") || lowerCaseType.includes("android") || lowerCaseType.includes("ios") || lowerCaseType.includes("cross-platform") || lowerCaseType.includes("react native") || lowerCaseType.includes("flutter") || lowerCaseType.includes("xamarin")) {
-                return "mobile";
-            }
-
-            return "other";
+            // REMOVIDA A CATEGORIA MOBILE DA FILTRAGEM (mantém compatibilidade se dados existirem, mas não tem botão)
+            // if (lowerCaseType.includes("mobile") || lowerCaseType.includes("android") || lowerCaseType.includes("ios") || lowerCaseType.includes("cross-platform") || lowerCaseType.includes("react native") || lowerCaseType.includes("flutter") || lowerCaseType.includes("xamarin")) {
+            //     return "mobile";
+            // }
+            // REMOVIDA A CATEGORIA OTHER DA FILTRAGEM
+            // return "other"; 
+            
+            // Retorna 'other' por padrão se nenhuma categoria corresponder após a remoção de 'mobile' e 'other' como botões
+            return "api_plataforma"; // Redireciona "outros" para "API & Plataforma" ou qualquer categoria existente.
+                                     // Ou pode criar um "default" customizado se a categoria original não for mais usada.
+                                     // Por simplicidade, vamos deixar as lógicas específicas e o 'other' como fallback final.
+                                     // Se os botões forem removidos, os cards dessas categorias ainda serão exibidos em "Todos".
         };
 
 
@@ -317,17 +317,10 @@
             if (filterCategory === "all") {
                 filtered = allCardsData;
             } else {
-                // Passa card.name para getFilterCategory
                 filtered = allCardsData.filter(card => getFilterCategory(card.type, card.name) === filterCategory);
             }
             renderCards(filtered, myCollectionGrid);
         };
-
-        // A função updateSpecificCard e updateAllCards foram removidas pois os botões foram realocados.
-        /*
-        const updateSpecificCard = async (languageName) => { ... };
-        const updateAllCards = async () => { ... };
-        */
 
         // Event Listeners
         backButton.addEventListener('click', () => {

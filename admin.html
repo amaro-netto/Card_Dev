@@ -152,7 +152,7 @@
             background-color: #007ACC; /* Azul para gerar via IA */
         }
 
-        .action-button.csv-upload { 
+        .action-button.csv-upload { /* Estilo para o botão de Upload CSV */
             background-color: #27AE60; 
         }
 
@@ -160,14 +160,15 @@
             background-color: #3498db; 
         }
 
-        .action-button.search-single { /* NOVO: Estilo para o botão de buscar card único */
-            background-color: #FF8C00; /* Laranja escuro */
+        .action-button.search-single { 
+            background-color: #FF8C00; 
         }
-        .action-button.update-single { /* NOVO: Estilo para o botão de atualizar card único */
+        .action-button.update-single-card-button { /* NOVO: Estilo para o botão de atualizar card único */
             background-color: #FFD700; /* Dourado */
             color: #333; /* Cor de texto para contraste com dourado */
+            margin-top: 15px; /* Espaçamento */
         }
-        .action-button.update-single:hover {
+        .action-button.update-single-card-button:hover {
             background-color: #FFC400;
         }
 
@@ -188,11 +189,10 @@
             background-color: #2980b9;
         }
 
-        .action-button.search-single:hover { /* Hover para buscar card único */
+        .action-button.search-single:hover { 
             background-color: #E67E00;
         }
-
-
+        
         .action-button:disabled {
             background-color: #a5d6a7;
             cursor: not-allowed;
@@ -210,12 +210,13 @@
             background-color: #8ac0e2;
             cursor: not-allowed;
         }
-        .action-button.search-single:disabled { /* Disabled para buscar card único */
+        .action-button.search-single:disabled { 
             background-color: #FFB366;
             cursor: not-allowed;
         }
-        .action-button.update-single:disabled { /* Disabled para atualizar card único */
+        .action-button.update-single-card-button:disabled { /* Disabled para o botão de atualizar card único */
             background-color: #FFF0B3;
+            color: #666;
             cursor: not-allowed;
         }
 
@@ -246,6 +247,27 @@
             color: #e65100;
         }
 
+        /* Estilo para a área de drop de CSV */
+        .csv-drop-area {
+            border: 2px dashed #a0aec0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            color: #64748b;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .csv-drop-area.highlight {
+            background-color: #e0f2f7;
+            border-color: #3182ce;
+        }
+        .csv-drop-area p {
+            margin: 0;
+        }
+        .csv-drop-area input[type="file"] {
+            display: none; /* Esconde o input file nativo */
+        }
+
         /* Estilo para exibir o card buscado no admin */
         .single-card-display-admin {
             display: flex;
@@ -256,11 +278,16 @@
             background-color: #e2e8f0; /* Fundo para destacar */
             border-radius: 15px;
             padding: 20px;
+            position: relative; /* Necessário para posicionar o botão de atualizar fora do card */
         }
         .single-card-display-admin .card-container {
             margin: 0; /* Remove margem extra se o card-container tiver */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra mais suave */
         }
-
+        /* Oculta o rodapé do card na exibição individual do admin, pois o botão foi movido */
+        .single-card-display-admin .card-footer {
+            display: none; 
+        }
 
         .back-to-home-button {
             background-color: #7f8c8d;
@@ -327,7 +354,8 @@
             <div class="menu-item active" data-target="generate-bulk-section">Gerar via IA</div>
             <div class="menu-item" data-target="upload-csv-section">Upload CSV</div>
             <div class="menu-item" data-target="update-all-section">Atualizar Todos</div>
-            <div class="menu-item" data-target="update-single-section">Atualizar Individual</div> </div>
+            <div class="menu-item" data-target="update-single-section">Atualizar Individual</div>
+        </div>
 
         <div id="generate-bulk-section" class="admin-section-content active">
             <h2 class="section-header">Gerar Cards em Massa via IA (Gemini)</h2>
@@ -344,14 +372,18 @@
 
         <div id="upload-csv-section" class="admin-section-content">
             <h2 class="section-header">Upload de Linguagens via CSV</h2>
-            <p class="text-gray-600 text-center text-sm">Cole o conteúdo CSV completo (incluindo o cabeçalho) da lista de linguagens. A coluna de nomes deve ser "ProgrammingLanguage".</p>
+            <p class="text-gray-600 text-center text-sm">Arraste e solte o arquivo CSV aqui, ou clique para selecionar. A coluna de nomes deve ser "ProgrammingLanguage".</p>
             
             <div class="form-group">
-                <label for="csvDataInput">Conteúdo CSV:</label>
-                <textarea id="csvDataInput" placeholder="ProgrammingLanguage,OtherColumn&#10;Python,Value1&#10;Java,Value2"></textarea>
+                <label for="csvFileInput" class="csv-drop-area" id="csvDropArea">
+                    <p>Arraste e solte o arquivo CSV aqui</p>
+                    <p>ou clique para selecionar</p>
+                    <input type="file" id="csvFileInput" accept=".csv">
+                </label>
+                <div id="csvFileNameDisplay" class="text-gray-600 text-sm mt-2">Nenhum arquivo selecionado.</div>
             </div>
 
-            <button id="uploadCsvButton" class="action-button csv-upload">Fazer Upload CSV e Gerar</button>
+            <button id="uploadCsvButton" class="action-button csv-upload" disabled>Fazer Upload CSV e Gerar</button>
             <div id="adminMessageAreaCsvUpload" class="admin-message-area"></div>
         </div>
 
@@ -374,9 +406,10 @@
             <button id="searchSingleCardButton" class="action-button search-single">Buscar Card</button>
             <div id="adminMessageAreaSingle" class="admin-message-area"></div>
 
-            <div id="singleCardDisplayAdmin" class="single-card-display-admin">
+            <div id="singleCardContainer" class="single-card-display-admin">
                 <p class="text-gray-500">Busque por uma linguagem para ver o card aqui.</p>
             </div>
+            <button id="updateSingleCardButton" class="action-button update-single-card-button" style="display: none;">Atualizar Card Exibido</button>
         </div>
         
         <button id="backToHomeButton" class="back-to-home-button">Voltar à Página Inicial</button>
@@ -398,25 +431,32 @@
         const adminMessageAreaGenerate = document.getElementById('adminMessageAreaGenerate');
 
         // Elementos para Upload CSV
-        const csvDataInput = document.getElementById('csvDataInput');
+        const csvFileInput = document.getElementById('csvFileInput');
+        const csvDropArea = document.getElementById('csvDropArea');
+        const csvFileNameDisplay = document.getElementById('csvFileNameDisplay');
         const uploadCsvButton = document.getElementById('uploadCsvButton');
         const adminMessageAreaCsvUpload = document.getElementById('adminMessageAreaCsvUpload');
+        let selectedCsvFile = null; // Variável para armazenar o arquivo selecionado
 
         // Elementos para Atualizar Todos os Cards
         const updateAllCardsButtonAdmin = document.getElementById('updateAllCardsButtonAdmin');
         const adminMessageAreaUpdateAll = document.getElementById('adminMessageAreaUpdateAll');
 
-        // NOVO: Elementos para Atualizar Card Individualmente
+        // Elementos para Atualizar Card Individualmente
         const singleLanguageInput = document.getElementById('singleLanguageInput');
         const searchSingleCardButton = document.getElementById('searchSingleCardButton');
-        const singleCardDisplayAdmin = document.getElementById('singleCardDisplayAdmin');
-        const adminMessageAreaSingle = document.getElementById('adminMessageAreaSingle'); // Mensagens para essa seção
+        const singleCardContainer = document.getElementById('singleCardContainer'); // Renomeado para evitar conflito com singleCardDisplayAdmin CSS
+        const adminMessageAreaSingle = document.getElementById('adminMessageAreaSingle'); 
+        const updateSingleCardButton = document.getElementById('updateSingleCardButton'); // Novo botão externo
 
 
         // Elemento da Chave Secreta (compartilhado)
         const adminSecretKeyInput = document.getElementById('adminSecretKey');
 
         const backToHomeButton = document.getElementById('backToHomeButton');
+
+        // Variável para armazenar o nome do card atualmente exibido na seção de atualização individual
+        let currentSingleCardName = null;
 
         // Função para atualizar mensagens (agora específica para áreas diferentes)
         const updateMessage = (areaElement, message, type = 'info') => {
@@ -429,20 +469,34 @@
             item.addEventListener('click', () => {
                 const targetId = item.dataset.target;
 
-                // Remove 'active' de todos os itens do menu e das seções de conteúdo
                 menuItems.forEach(mi => mi.classList.remove('active'));
                 adminSections.forEach(sec => sec.classList.remove('active'));
 
-                // Adiciona 'active' ao item clicado e à seção de conteúdo correspondente
                 item.classList.add('active');
                 document.getElementById(targetId).classList.add('active');
 
-                // Limpa a área de exibição do card individual ao mudar de seção
+                // Limpa áreas específicas ao mudar de seção
                 if (targetId !== 'update-single-section') {
-                    singleCardDisplayAdmin.innerHTML = '<p class="text-gray-500">Busque por uma linguagem para ver o card aqui.</p>';
-                    updateMessage(adminMessageAreaSingle, ''); // Limpa mensagem da seção single
-                    singleLanguageInput.value = ''; // Limpa o input
+                    singleCardContainer.innerHTML = '<p class="text-gray-500">Busque por uma linguagem para ver o card aqui.</p>';
+                    updateMessage(adminMessageAreaSingle, '');
+                    singleLanguageInput.value = '';
+                    updateSingleCardButton.style.display = 'none'; // Esconde o botão de atualização individual
+                    currentSingleCardName = null; // Limpa o nome do card exibido
+                } else {
+                    // Ao entrar na seção de atualização individual, reseta para o estado inicial
+                    singleCardContainer.innerHTML = '<p class="text-gray-500">Busque por uma linguagem para ver o card aqui.</p>';
+                    updateMessage(adminMessageAreaSingle, '');
+                    singleLanguageInput.value = '';
+                    updateSingleCardButton.style.display = 'none';
+                    currentSingleCardName = null;
                 }
+                 // Limpa feedback de outras seções
+                updateMessage(adminMessageAreaGenerate, '');
+                updateMessage(adminMessageAreaCsvUpload, '');
+                updateMessage(adminMessageAreaUpdateAll, '');
+                selectedCsvFile = null; // Limpa arquivo CSV selecionado
+                csvFileNameDisplay.textContent = 'Nenhum arquivo selecionado.';
+                uploadCsvButton.disabled = true;
             });
         });
 
@@ -498,57 +552,112 @@
             }
         });
 
-        // Event Listener para Upload CSV
-        uploadCsvButton.addEventListener('click', async () => {
-            const csvData = csvDataInput.value.trim();
-            const adminKey = adminSecretKeyInput.value.trim();
+        // Event Listeners para Drag-and-Drop e Seleção de Arquivo CSV
+        csvDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            csvDropArea.classList.add('highlight');
+        });
 
-            if (!csvData) {
-                updateMessage(adminMessageAreaCsvUpload, 'Por favor, cole o conteúdo CSV.', 'error');
+        csvDropArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            csvDropArea.classList.remove('highlight');
+        });
+
+        csvDropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            csvDropArea.classList.remove('highlight');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleCsvFile(files[0]);
+            }
+        });
+
+        csvFileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleCsvFile(files[0]);
+            }
+        });
+
+        function handleCsvFile(file) {
+            if (file.type !== 'text/csv') {
+                updateMessage(adminMessageAreaCsvUpload, 'Por favor, selecione um arquivo CSV (.csv).', 'error');
+                csvFileNameDisplay.textContent = 'Nenhum arquivo selecionado.';
+                uploadCsvButton.disabled = true;
+                selectedCsvFile = null;
                 return;
             }
+            selectedCsvFile = file;
+            csvFileNameDisplay.textContent = `Arquivo selecionado: ${file.name}`;
+            updateMessage(adminMessageAreaCsvUpload, `Arquivo '${file.name}' pronto para upload.`, 'info');
+            uploadCsvButton.disabled = false; // Habilita o botão de upload
+        }
+
+        // Event Listener para Upload CSV (agora lê do arquivo selecionado)
+        uploadCsvButton.addEventListener('click', async () => {
+            if (!selectedCsvFile) {
+                updateMessage(adminMessageAreaCsvUpload, 'Por favor, selecione ou arraste um arquivo CSV primeiro.', 'error');
+                return;
+            }
+
+            const adminKey = adminSecretKeyInput.value.trim();
 
             if (!adminKey) {
                 updateMessage(adminMessageAreaCsvUpload, 'Por favor, insira a chave secreta de administração.', 'error');
                 return;
             }
 
-            updateMessage(adminMessageAreaCsvUpload, 'Enviando CSV para o servidor e iniciando geração...', 'info');
+            updateMessage(adminMessageAreaCsvUpload, `Lendo arquivo '${selectedCsvFile.name}' e enviando para o servidor...`, 'info');
             uploadCsvButton.disabled = true;
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/admin/upload-csv`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json', 
-                        'Authorization': `Bearer ${adminKey}` 
-                    },
-                    body: JSON.stringify({ csvData: csvData }) 
-                });
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const csvContent = e.target.result; // Conteúdo do CSV como string
 
-                const result = await response.json();
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/admin/upload-csv`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json', 
+                            'Authorization': `Bearer ${adminKey}` 
+                        },
+                        body: JSON.stringify({ csvData: csvContent }) 
+                    });
 
-                if (!response.ok) {
-                    updateMessage(adminMessageAreaCsvUpload, `Erro de upload CSV: ${result.error || 'Falha desconhecida'}`, 'error');
-                    console.error('Erro de upload CSV:', result.error);
-                } else {
-                    let successCount = (typeof result.successful === 'number') ? result.successful : 0;
-                    let failedCount = (typeof result.failed === 'number') ? result.failed : 0;
-                    let successMessage = `Upload CSV concluído: ${successCount} cards adicionados/atualizados.`;
-                    if (failedCount > 0) {
-                        successMessage += ` ${failedCount} falharam. Verifique o console do servidor para mais detalhes.`;
-                        updateMessage(adminMessageAreaCsvUpload, successMessage, 'warning'); 
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        updateMessage(adminMessageAreaCsvUpload, `Erro de upload CSV: ${result.error || 'Falha desconhecida'}`, 'error');
+                        console.error('Erro de upload CSV:', result.error);
                     } else {
-                        updateMessage(adminMessageAreaCsvUpload, successMessage, 'success');
+                        let successCount = (typeof result.successful === 'number') ? result.successful : 0;
+                        let failedCount = (typeof result.failed === 'number') ? result.failed : 0;
+                        let successMessage = `Upload CSV concluído: ${successCount} cards adicionados/atualizados.`;
+                        if (failedCount > 0) {
+                            successMessage += ` ${failedCount} falharam. Verifique o console do servidor para mais detalhes.`;
+                            updateMessage(adminMessageAreaCsvUpload, successMessage, 'warning'); 
+                        } else {
+                            updateMessage(adminMessageAreaCsvUpload, successMessage, 'success');
+                        }
                     }
+                } catch (error) {
+                    updateMessage(adminMessageAreaCsvUpload, `Erro de rede ou servidor: ${error.message}. Verifique se o servidor Node.js está rodando.`, 'error');
+                    console.error('Erro na requisição de upload CSV:', error);
+                } finally {
+                    uploadCsvButton.disabled = false;
+                    selectedCsvFile = null; // Reseta o arquivo selecionado
+                    csvFileNameDisplay.textContent = 'Nenhum arquivo selecionado.';
                 }
-            } catch (error) {
-                updateMessage(adminMessageAreaCsvUpload, `Erro de rede ou servidor: ${error.message}. Verifique se o servidor Node.js está rodando.`, 'error');
-                console.error('Erro na requisição de upload CSV:', error);
-            } finally {
+            };
+            reader.onerror = () => {
+                updateMessage(adminMessageAreaCsvUpload, 'Erro ao ler o arquivo CSV.', 'error');
                 uploadCsvButton.disabled = false;
-            }
+                selectedCsvFile = null;
+                csvFileNameDisplay.textContent = 'Nenhum arquivo selecionado.';
+            };
+            reader.readAsText(selectedCsvFile); // Inicia a leitura do arquivo
         });
+
 
         // Event Listener para Atualizar Todos os Cards (no Admin)
         updateAllCardsButtonAdmin.addEventListener('click', async () => {
@@ -600,156 +709,6 @@
             }
         });
 
-        // FUNÇÕES E EVENT LISTENERS PARA ATUALIZAR CARD INDIVIDUALMENTE
-        // Função utilitária para adaptar o tamanho da fonte (copiada da collection.html)
-        const fitTextToContainer = (element, maxFontSizePx, minFontSizePx, maxLines = 1) => {
-            let currentFontSize = maxFontSizePx;
-            element.style.fontSize = `${currentFontSize}px`;
-            element.style.overflow = 'visible';
-            element.style.whiteSpace = 'normal';
-
-            while (currentFontSize > minFontSizePx) {
-                let overflows = false;
-                if (maxLines === 1) {
-                    if (element.scrollWidth > element.clientWidth) {
-                        overflows = true;
-                    }
-                } else {
-                    if (element.scrollHeight > element.clientHeight) {
-                        overflows = true;
-                    }
-                }
-                if (overflows) {
-                    currentFontSize -= 0.5;
-                    element.style.fontSize = `${currentFontSize}px`;
-                } else {
-                    break;
-                }
-            }
-            if (maxLines === 1) {
-                element.style.overflow = 'hidden';
-                element.style.whiteSpace = 'nowrap';
-                element.style.textOverflow = 'ellipsis';
-            } else {
-                element.style.overflow = 'hidden';
-                element.style.whiteSpace = 'normal';
-            }
-        };
-
-        // Função para criar o elemento do card (copiada da collection.html e adaptada)
-        const createCardElementAdmin = (cardData) => {
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'card-container'; // Reutiliza o estilo de card-container
-            cardDiv.dataset.languageName = cardData.name; 
-
-            // Adaptação para o tema
-            const theme = getLanguageTheme(cardData.name); // getLanguageTheme precisa ser acessível
-            for (const [prop, value] of Object.entries(theme)) {
-                cardDiv.style.setProperty(prop, value);
-            }
-
-            let iconHtmlContent = '';
-            if (cardData.iconUrl) {
-                iconHtmlContent = `<img class="card-logo-svg" src="${API_BASE_URL}${cardData.iconUrl}" alt="${cardData.name} Icon">`;
-            } else {
-                const defaultSvgPath = '<path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm-4 10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>';
-                iconHtmlContent = `<svg class="card-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>${cardData.name}</title>${defaultSvgPath}</svg>`;
-            }
-            
-            cardDiv.innerHTML = `
-                <div class="card-header">
-                    <div class="card-name-wrapper">
-                        ${iconHtmlContent}
-                        <div class="card-name" data-max-font="1.4" data-min-font="0.8">${cardData.name}</div>
-                    </div>
-                    <div class="card-type" data-max-font="0.8" data-min-font="0.6">${cardData.type}</div>
-                </div>
-                <div class="card-image-wrapper">
-                    <img class="card-image" src="${cardData.imageUrl || API_BASE_URL + '/public/images/placeholder.png'}"
-                        alt="Ilustração do ${cardData.name} como um Personagem Anime">
-                </div>
-                <div class="card-description" data-max-font="0.85" data-min-font="0.6" data-max-lines="4">
-                    ${cardData.description}
-                </div>
-                <div class="card-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">PWR/</span>
-                        <span class="stat-value">${cardData.pwr !== undefined ? cardData.pwr : '--'}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">| VEL/</span>
-                        <span class="stat-value">${cardData.vel !== undefined ? cardData.vel : '--'}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">| FLX/</span>
-                        <span class="stat-value">${cardData.flx !== undefined ? cardData.flx : '--'}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">| COM/</span>
-                        <span class="stat-value">${cardData.com !== undefined ? cardData.com : '--'}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">| CRV/</span>
-                        <span class="stat-value">${cardData.crv !== undefined ? cardData.crv : '--'}</span>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <span>Ilustração: Amaro AI</span>
-                    <button class="action-button update-single" data-language-name="${cardData.name}" title="Atualizar este card">Atualizar Card</button>
-                </div>
-            `;
-
-            // Adiciona o event listener para o botão de atualização dentro do card
-            const updateButton = cardDiv.querySelector('.action-button.update-single');
-            if (updateButton) {
-                updateButton.addEventListener('click', async () => {
-                    const nameToUpdate = updateButton.dataset.languageName;
-                    const adminKey = adminSecretKeyInput.value.trim(); // Pega a chave de admin
-
-                    if (!adminKey) {
-                        updateMessage(adminMessageAreaSingle, 'Por favor, insira a chave secreta de administração para atualizar o card.', 'error');
-                        return;
-                    }
-
-                    if (confirm(`Tem certeza que deseja atualizar o card de "${nameToUpdate}"? Isso regerará seus dados e imagem via IA.`)) {
-                        updateMessage(adminMessageAreaSingle, `Atualizando card para "${nameToUpdate}"... Isso pode levar um momento.`, "info");
-                        updateButton.disabled = true;
-                        searchSingleCardButton.disabled = true; // Desabilita busca enquanto atualiza
-                        
-                        try {
-                            const response = await fetch(`${API_BASE_URL}/api/cards/update`, {
-                                method: 'POST',
-                                headers: { 
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${adminKey}` 
-                                },
-                                body: JSON.stringify({ languageName: nameToUpdate })
-                            });
-
-                            if (!response.ok) {
-                                const errorData = await response.json();
-                                throw new Error(errorData.error || `Erro ao atualizar card: ${response.status} ${response.statusText}`);
-                            }
-
-                            const result = await response.json();
-                            updateMessage(adminMessageAreaSingle, `Card para "${nameToUpdate}" atualizado com sucesso!`, "success");
-                            // Re-exibe o card atualizado se a busca foi bem-sucedida
-                            await handleSearchSingleCard(); 
-
-                        } catch (error) {
-                            console.error(`Erro ao atualizar card "${nameToUpdate}":`, error);
-                            updateMessage(adminMessageAreaSingle, `Erro ao atualizar card "${nameToUpdate}": ${error.message}`, "error");
-                        } finally {
-                            updateButton.disabled = false;
-                            searchSingleCardButton.disabled = false;
-                        }
-                    }
-                });
-            }
-
-            return cardDiv;
-        };
-
         // Lógica de busca de card individual
         const handleSearchSingleCard = async () => {
             const languageName = singleLanguageInput.value.trim();
@@ -766,6 +725,7 @@
 
             updateMessage(adminMessageAreaSingle, `Buscando card para "${languageName}"...`, 'info');
             searchSingleCardButton.disabled = true;
+            updateSingleCardButton.disabled = true; // Desabilita botão de atualização enquanto busca
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/admin/cards/${encodeURIComponent(languageName)}`, {
@@ -778,13 +738,15 @@
                 const result = await response.json();
 
                 if (!response.ok) {
-                    singleCardDisplayAdmin.innerHTML = `<p class="text-gray-500">${result.message || 'Card não encontrado.'}</p>`;
+                    singleCardContainer.innerHTML = `<p class="text-gray-500">${result.message || 'Card não encontrado.'}</p>`;
                     updateMessage(adminMessageAreaSingle, `Card "${languageName}" não encontrado.`, 'warning');
                     console.error('Erro ao buscar card individual:', result.message || result.error);
+                    updateSingleCardButton.style.display = 'none'; // Esconde o botão se não encontrar
+                    currentSingleCardName = null;
                 } else {
-                    singleCardDisplayAdmin.innerHTML = ''; // Limpa a área
+                    singleCardContainer.innerHTML = ''; // Limpa a área
                     const cardElement = createCardElementAdmin(result); // Cria o card
-                    singleCardDisplayAdmin.appendChild(cardElement); // Adiciona ao display
+                    singleCardContainer.appendChild(cardElement); // Adiciona ao display
 
                     // Ajusta as fontes do card recém-criado
                     const remToPx = parseFloat(window.getComputedStyle(document.documentElement).fontSize);
@@ -797,11 +759,16 @@
                     if (descriptionEl) fitTextToContainer(descriptionEl, parseFloat(descriptionEl.dataset.maxFont) * remToPx, parseFloat(descriptionEl.dataset.minFont) * remToPx, parseInt(descriptionEl.dataset.maxLines, 10));
 
                     updateMessage(adminMessageAreaSingle, `Card para "${languageName}" encontrado.`, 'success');
+                    updateSingleCardButton.style.display = 'block'; // Mostra o botão de atualização individual
+                    updateSingleCardButton.disabled = false; // Habilita o botão
+                    currentSingleCardName = languageName; // Armazena o nome do card buscado
                 }
             } catch (error) {
                 updateMessage(adminMessageAreaSingle, `Erro de rede ou servidor ao buscar card: ${error.message}.`, 'error');
                 console.error('Erro na requisição de busca de card individual:', error);
-                singleCardDisplayAdmin.innerHTML = '<p class="text-red-500">Erro ao carregar card.</p>';
+                singleCardContainer.innerHTML = '<p class="text-red-500">Erro ao carregar card.</p>';
+                updateSingleCardButton.style.display = 'none';
+                currentSingleCardName = null;
             } finally {
                 searchSingleCardButton.disabled = false;
             }
@@ -811,6 +778,54 @@
         singleLanguageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 handleSearchSingleCard();
+            }
+        });
+
+        // Event Listener para o NOVO botão de Atualizar Card Exibido
+        updateSingleCardButton.addEventListener('click', async () => {
+            if (!currentSingleCardName) {
+                updateMessage(adminMessageAreaSingle, 'Nenhum card selecionado para atualizar.', 'error');
+                return;
+            }
+
+            const adminKey = adminSecretKeyInput.value.trim();
+            if (!adminKey) {
+                updateMessage(adminMessageAreaSingle, 'Por favor, insira a chave secreta de administração.', 'error');
+                return;
+            }
+
+            if (confirm(`Tem certeza que deseja atualizar o card de "${currentSingleCardName}"? Isso regerará seus dados e imagem via IA.`)) {
+                updateMessage(adminMessageAreaSingle, `Atualizando card para "${currentSingleCardName}"... Isso pode levar um momento.`, "info");
+                updateSingleCardButton.disabled = true;
+                searchSingleCardButton.disabled = true;
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/cards/update`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${adminKey}` 
+                        },
+                        body: JSON.stringify({ languageName: currentSingleCardName })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `Erro ao atualizar card: ${response.status} ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    updateMessage(adminMessageAreaSingle, `Card para "${currentSingleCardName}" atualizado com sucesso!`, "success");
+                    // Opcional: re-buscar e re-exibir o card atualizado para mostrar as mudanças
+                    await handleSearchSingleCard(); 
+
+                } catch (error) {
+                    console.error(`Erro ao atualizar card "${currentSingleCardName}":`, error);
+                    updateMessage(adminMessageAreaSingle, `Erro ao atualizar card "${currentSingleCardName}": ${error.message}`, "error");
+                } finally {
+                    updateSingleCardButton.disabled = false;
+                    searchSingleCardButton.disabled = false;
+                }
             }
         });
 
