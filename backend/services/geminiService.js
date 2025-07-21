@@ -1,4 +1,4 @@
-// REMOVIDA: const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+// backend/services/geminiService.js
 const { GEMINI_API_KEY } = require('../main'); 
 
 /**
@@ -37,7 +37,7 @@ Caso contrário, defina 'isValidLanguage' como false e os outros campos podem se
                 type: "OBJECT",
                 properties: {
                     "name": { "type": "STRING" },
-                    "type": "STRING" },
+                    "type": { "type": "STRING" }, // <-- ERA AQUI O PROBLEMA DA CHAVE EXTRA
                     "description": { "type": "STRING" },
                     "stats": {
                         "type": "OBJECT",
@@ -115,5 +115,6 @@ Caso contrário, defina 'isValidLanguage' como false e os outros campos podem se
         console.error("Erro ao chamar a API Gemini para dados do card:", error);
         return null;
     }
+}
 
 module.exports = { getCardDataFromGemini };
