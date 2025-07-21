@@ -2,9 +2,9 @@
   "name": "cards-app-local",
   "version": "1.0.0",
   "description": "Aplicação de coleção de cards de linguagens com IA, SQLite e armazenamento local.",
-  "main": "server.js",
+  "main": "backend/main.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node backend/main.js"
   },
   "keywords": [
     "nodejs",
@@ -22,8 +22,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "node-fetch": "^2.6.1",
-    "replicate": "^1.0.1",
-    "sqlite3": "^5.1.7"
-  }
+    "sqlite3": "^5.1.7",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {}
 }
