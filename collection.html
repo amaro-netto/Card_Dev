@@ -63,7 +63,6 @@
         const myCollectionGrid = document.getElementById('myCollectionGrid');
         const messageArea = document.getElementById('messageArea');
         const backButton = document.getElementById('backButton');
-        // REMOVIDO: const updateAllCardsButton = document.getElementById('updateAllCardsButton');
         const filterButtons = document.querySelectorAll('.filter-button');
         let allCardsData = []; // Variável para armazenar todos os cards carregados
 
@@ -186,7 +185,7 @@
 
         /**
          * Cria e retorna um elemento HTML de cartão de linguagem.
-         * Inclui o botão de atualização individual.
+         * O botão de atualização individual FOI REMOVIDO daqui.
          * @param {Object} cardData - Os dados do cartão.
          * @returns {HTMLElement} O elemento div do cartão.
          */
@@ -247,24 +246,11 @@
                 </div>
                 <div class="card-footer">
                     <span>Ilustração: Amaro AI</span>
-                    <button class="update-card-button" title="Atualizar este card" data-language-name="${cardData.name}">
-                        <svg class="update-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" stroke="white" stroke-width="1.5"/>
-                            <path d="M12 6V12L16 14" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
+                    </div>
             `;
-
-            const updateButton = cardDiv.querySelector('.update-card-button');
-            if (updateButton) {
-                updateButton.addEventListener('click', async () => {
-                    const nameToUpdate = updateButton.dataset.languageName;
-                    if (confirm(`Tem certeza que deseja atualizar o card de "${nameToUpdate}"? Isso regerará seus dados e imagem via IA.`)) {
-                        await updateSpecificCard(nameToUpdate);
-                    }
-                });
-            }
+            // Removida toda a lógica e event listener do updateButton
+            // const updateButton = cardDiv.querySelector('.update-card-button');
+            // if (updateButton) { ... }
 
             return cardDiv;
         };
@@ -302,7 +288,6 @@
 
         const loadCollectionAndApplyFilter = async () => {
             updateMessage("Carregando sua coleção de cards...", "info");
-            // REMOVIDO: updateAllCardsButton.disabled = true;
             filterButtons.forEach(btn => btn.disabled = true);
 
             try {
@@ -323,7 +308,6 @@
                 updateMessage("Erro ao carregar sua coleção de cards. Verifique o console do servidor e do navegador. O servidor Node.js pode não estar rodando.", "error");
                 myCollectionGrid.innerHTML = '<p class="text-red-500">Erro ao carregar cards. O servidor Node.js pode não estar rodando.</p>';
             } finally {
-                // REMOVIDO: updateAllCardsButton.disabled = false;
                 filterButtons.forEach(btn => btn.disabled = false);
             }
         };
@@ -339,95 +323,16 @@
             renderCards(filtered, myCollectionGrid);
         };
 
-        const updateSpecificCard = async (languageName) => {
-            updateMessage(`Atualizando card para "${languageName}"... Isso pode levar um momento.`, "info");
-            // REMOVIDO: updateAllCardsButton.disabled = true;
-            filterButtons.forEach(btn => btn.disabled = true);
-            const cardElement = document.querySelector(`.card-container[data-language-name="${languageName}"]`);
-            if (cardElement) {
-                const button = cardElement.querySelector('.update-card-button');
-                if (button) button.disabled = true;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/cards/update`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ languageName: languageName })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Erro ao atualizar card: ${response.status} ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                updateMessage(result.message, "success");
-                await loadCollectionAndApplyFilter();
-
-            } catch (error) {
-                console.error(`Erro ao atualizar card "${languageName}":`, error);
-                updateMessage(`Erro ao atualizar card "${languageName}": ${error.message}`, "error");
-            } finally {
-                // REMOVIDO: updateAllCardsButton.disabled = false;
-                filterButtons.forEach(btn => btn.disabled = false);
-                const cardElement = document.querySelector(`.card-container[data-language-name="${languageName}"]`);
-                if (cardElement) {
-                    const button = cardElement.querySelector('.update-card-button');
-                    if (button) button.disabled = false;
-                }
-            }
-        };
-
-        // REMOVIDO: A função updateAllCards foi movida para o admin.html
+        // A função updateSpecificCard e updateAllCards foram removidas pois os botões foram realocados.
         /*
-        const updateAllCards = async () => {
-            if (!confirm("Tem certeza que deseja atualizar TODOS os cards da sua coleção? Isso pode levar vários minutos e consumir cota da sua API Gemini.")) {
-                return;
-            }
-
-            updateMessage("Atualizando TODOS os cards... Isso pode demorar bastante!", "info");
-            updateAllCardsButton.disabled = true;
-            filterButtons.forEach(btn => btn.disabled = true);
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/cards/update`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Erro ao atualizar todos os cards: ${response.status} ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                updateMessage(result.message, "success");
-
-                if (result.failed && result.failed.length > 0) {
-                    console.warn("Cards que falharam na atualização:", result.failed);
-                    updateMessage(`Atualização em massa concluída. Alguns cards falharam. Verifique o console para detalhes.`, "warning");
-                }
-                
-                await loadCollectionAndApplyFilter();
-
-            } catch (error) {
-                console.error("Erro ao atualizar todos os cards:", error);
-                updateMessage(`Erro ao atualizar todos os cards: ${error.message}`, "error");
-            } finally {
-                updateAllCardsButton.disabled = false;
-                filterButtons.forEach(btn => btn.disabled = false);
-            }
-        };
+        const updateSpecificCard = async (languageName) => { ... };
+        const updateAllCards = async () => { ... };
         */
 
         // Event Listeners
         backButton.addEventListener('click', () => {
             window.location.href = '/index.html';
         });
-
-        // REMOVIDO: updateAllCardsButton.addEventListener('click', updateAllCards);
 
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {

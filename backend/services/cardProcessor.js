@@ -1,12 +1,14 @@
-const geminiService = require('./geminiService'); // Importa o serviço Gemini
-const replicateService = require('./replicateService'); // Importa o serviço Replicate
-const dbService = require('./dbService'); // Importa o serviço de DB
-const fs = require('fs'); // Para salvar a imagem localmente
-const path = require('path'); // Para resolver caminhos
+// backend/services/cardProcessor.js
+// REMOVIDA: const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const geminiService = require('./geminiService'); 
+const replicateService = require('./replicateService'); 
+const dbService = require('./dbService'); 
+const fs = require('fs'); 
+const path = require('path'); 
 
 // Caminhos para diretórios de imagens e ícones (ajustados para este módulo)
-const IMAGES_DIR = path.join(__dirname, '../../public', 'images'); // Sobe dois níveis para public/images
-const ICONS_DIR = path.join(__dirname, '../../public', 'icons');   // Sobe dois níveis para public/icons
+const IMAGES_DIR = path.join(__dirname, '../../public', 'images'); 
+const ICONS_DIR = path.join(__dirname, '../../public', 'icons');   
 
 // Atraso entre as requisições Gemini para evitar limites de cota
 const GEMINI_REQUEST_DELAY_MS = 2000; // Atraso de 2 segundos (2000 ms)
@@ -28,9 +30,9 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
         return { success: false, error: `"${normalizedLanguageName}" não é uma tecnologia de desenvolvimento, linguagem, framework, ferramenta, plataforma, ambiente ou conceito relevante na área de TI reconhecível.`, isValidLanguage: false };
     }
 
-    cardData.name = normalizedLanguageName; // Garante que o nome final no cardData seja o normalizado
-    let imageUrlToSave = `/public/images/placeholder.png`; // Fallback para imagem
-    const imageFileName = `${normalizedLanguageName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`; // Nome de arquivo seguro
+    cardData.name = normalizedLanguageName; 
+    let imageUrlToSave = `/public/images/placeholder.png`; 
+    const imageFileName = `${normalizedLanguageName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`; 
     const imageFilePath = path.join(IMAGES_DIR, imageFileName);
 
     // 2. Gerar imagem via Replicate (Base64) ou usar existente se não for forçado
@@ -40,7 +42,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
         generatedBase64ImageUrl = await replicateService.generateImageFromReplicate(cardData.imagePrompt); 
     } else {
         console.log(`INFO: Imagem para '${normalizedLanguageName}' já existe e regeração não forçada. Usando a imagem existente.`);
-        imageUrlToSave = `/public/images/${imageFileName}`; // Usa a URL existente
+        imageUrlToSave = `/public/images/${imageFileName}`; 
     }
 
 
@@ -50,13 +52,12 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
 
         try {
             fs.writeFileSync(imageFilePath, base64Data, 'base64');
-            imageUrlToSave = `/public/images/${imageFileName}`; // URL acessível pelo frontend
+            imageUrlToSave = `/public/images/${imageFileName}`; 
             console.log(`SUCESSO: Imagem salva localmente: ${imageUrlToSave}`);
         } catch (fileError) {
             console.error("ERRO: Erro ao salvar imagem localmente:", fileError);
-            // Mantém o fallback se o salvamento falhar
         }
-    } else if (forceImageRegeneration && !fs.existsSync(imageFilePath)) { // Se a regeração foi forçada mas falhou
+    } else if (forceImageRegeneration && !fs.existsSync(imageFilePath)) { 
         console.warn(`AVISO: Não foi possível regerar imagem para '${normalizedLanguageName}'. Usando placeholder.`);
     }
 
@@ -64,7 +65,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
     // 4. Verificar se um ícone local existe, caso contrário, usar um fallback.
     const iconFileName = `${normalizedLanguageName.toLowerCase().replace(/[^a-z0-9]/g, '')}.svg`;
     const iconFilePath = path.join(ICONS_DIR, iconFileName);
-    let iconUrlToSave = ''; // String vazia se não tiver ícone específico
+    let iconUrlToSave = ''; 
 
     if (fs.existsSync(iconFilePath)) {
         iconUrlToSave = `/public/icons/${iconFileName}`;
@@ -96,7 +97,7 @@ async function processCardUpdate(languageName, forceImageRegeneration = false) {
 
 module.exports = {
     processCardUpdate,
-    saveCardToDb: dbService.saveCardToDb, // Re-exporta a função de dbService
-    checkCardExists: dbService.checkCardExists, // Re-exporta a função de dbService
-    GEMINI_REQUEST_DELAY_MS // Exporta a constante do delay
+    saveCardToDb: dbService.saveCardToDb, 
+    checkCardExists: dbService.checkCardExists, 
+    GEMINI_REQUEST_DELAY_MS 
 };

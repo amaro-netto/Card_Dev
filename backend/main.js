@@ -1,16 +1,37 @@
+// backend/main.js
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose(); // Ainda precisamos aqui para inicializar o DB
+const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
+
+// Define global.fetch para que o fetch nativo do Node.js seja acessível em outros módulos CommonJS
+// Isso resolve o SyntaxError: await is only valid... em módulos CJS que usam fetch
+global.fetch = require('node-fetch'); // Usamos o node-fetch aqui no main.js e o tornamos global
+
 
 // Carrega as variáveis de ambiente do .env
 require('dotenv').config(); 
 
 // --- Configurações Iniciais e Banco de Dados ---
 const PORT = process.env.PORT || 3000;
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'your_super_secret_admin_key'; // Usado na autenticação
-const DB_PATH = path.join(__dirname, '../data', 'cards.db'); // Caminho relativo ajustado para ../data
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'your_super_secret_admin_key'; 
+
+// Lê as chaves de API do process.env (depois que dotenv carregou)
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
+
+// Verifica se as chaves da API estão configuradas (aqui é uma verificação inicial para subir o servidor)
+if (!GEMINI_API_KEY) {
+    console.warn('AVISO: A variável de ambiente GEMINI_API_KEY não está configurada. Funções Gemini podem falhar.');
+}
+if (!REPLICATE_API_TOKEN) {
+    console.warn('AVISO: A variável de ambiente REPLICATE_API_TOKEN não está configurada. Funções de imagem podem falhar.');
+}
+
+
+const DB_PATH = path.join(__dirname, '../data', 'cards.db'); 
 
 // Garante que a pasta 'data' exista
 if (!fs.existsSync(path.join(__dirname, '../data'))) {
@@ -46,8 +67,8 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
     }
 });
 
-// Exporta a instância do banco de dados para ser usada em outros módulos
-module.exports = { db, ADMIN_SECRET }; // Exporta db e ADMIN_SECRET
+// Exporta a instância do banco de dados e as chaves para outros módulos
+module.exports = { db, ADMIN_SECRET, GEMINI_API_KEY, REPLICATE_API_TOKEN }; 
 
 // --- Configuração do Express ---
 const app = express();
@@ -62,17 +83,17 @@ app.use((req, res, next) => {
     next();
 });
 
-// Importa as rotas (serão criadas nos próximos passos)
+// Importa as rotas
 const cardRoutes = require('./api/cardRoutes');
 const adminRoutes = require('./api/adminRoutes');
 
 // Usa as rotas no aplicativo Express
-app.use('/api', cardRoutes); // Rotas de cards (ex: /api/cards)
-app.use('/api/admin', adminRoutes); // Rotas de administração (ex: /api/admin/generate-bulk)
+app.use('/api', cardRoutes); 
+app.use('/api/admin', adminRoutes); 
 
 // As rotas estáticas devem vir POR ÚLTIMO para não interceptar as chamadas da API
-app.use(express.static(path.join(__dirname, '..'))); // Serve arquivos da raiz do projeto (index.html, admin.html)
-app.use('/public', express.static(path.join(__dirname, '../public'))); // Serve a pasta public/
+app.use(express.static(path.join(__dirname, '..'))); 
+app.use('/public', express.static(path.join(__dirname, '../public'))); 
 
 // Inicia o servidor
 app.listen(PORT, () => {

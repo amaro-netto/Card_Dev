@@ -1,8 +1,9 @@
+// backend/api/cardRoutes.js
 const express = require('express');
 const router = express.Router();
 const { db } = require('../main'); // Importa a instância do banco de dados do main.js
-const cardProcessor = require('../services/cardProcessor'); // Importa a função de processamento
-const auth = require('../utils/auth'); // Importa o middleware de autenticação
+const cardProcessor = require('../services/cardProcessor'); 
+const auth = require('../utils/auth'); 
 
 // Rota para obter todos os cards
 router.get('/cards', (req, res) => {
@@ -38,7 +39,7 @@ router.post('/cards', async (req, res) => {
 
         // Se não encontrado, processa e insere
         console.log(`INFO: Gerando dados e imagem para novo card '${normalizedLanguageName}' via Gemini...`);
-        const result = await cardProcessor.processCardUpdate(normalizedLanguageName, true); // Força regeneração da imagem para novos cards
+        const result = await cardProcessor.processCardUpdate(normalizedLanguageName, true); 
 
         if (result.success) {
             // Salvar o card no DB após o processamento bem-sucedido
@@ -63,7 +64,7 @@ router.post('/cards/update', auth.authenticateAdmin, async (req, res) => {
         // Atualizar um card específico
         console.log(`INFO: Solicitação para atualizar card: ${languageName}`);
         try {
-            const result = await cardProcessor.processCardUpdate(languageName, true); // Força regeneração de imagem
+            const result = await cardProcessor.processCardUpdate(languageName, true); 
 
             if (result.success) {
                 // Salvar o card no DB após o processamento bem-sucedido
@@ -89,16 +90,14 @@ router.post('/cards/update', auth.authenticateAdmin, async (req, res) => {
             }
 
             const updatePromises = rows.map(async (row) => { 
-                const result = await cardProcessor.processCardUpdate(row.name, true); // Força regerar imagem para todos
+                const result = await cardProcessor.processCardUpdate(row.name, true); 
                 if (result.success) {
-                    await cardProcessor.saveCardToDb(result.card); // Salvar cada card após processamento
+                    await cardProcessor.saveCardToDb(result.card); 
                 }
                 return result; 
             });
 
             try {
-                // Use Promise.allSettled para que todas as promessas sejam executadas,
-                // mesmo que algumas falhem, e você possa ver os resultados de todas.
                 const results = await Promise.allSettled(updatePromises);
 
                 const successfulUpdates = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value.card.name);
@@ -108,8 +107,8 @@ router.post('/cards/update', auth.authenticateAdmin, async (req, res) => {
 
                 res.status(200).json({
                     message: `Processamento de atualização em massa concluído. ${successfulUpdates.length} cards adicionados/atualizados.`,
-                    successful: successfulUpdates,
-                    failed: failedUpdates.map(r => r.status === 'rejected' ? r.reason.message || r.reason : r.value.error)
+                    successful: successfulUpdates.length, // Retornando a contagem, não o array completo
+                    failed: failedUpdates.length // Retornando a contagem, não o array completo
                 });
             } catch (error) {
                 console.error("ERRO: Erro no processamento em massa de cards:", error);

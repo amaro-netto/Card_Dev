@@ -1,4 +1,5 @@
-const { db } = require('../main'); // Importa a instância do banco de dados do main.js
+// backend/services/dbService.js
+const { db } = require('../main'); 
 
 /**
  * Função auxiliar para inserir/atualizar um único card no banco de dados.
@@ -45,12 +46,31 @@ async function checkCardExists(name) {
         db.get("SELECT name FROM cards WHERE name = ?", [name], (err, row) => {
             if (err) {
                 console.error(`ERRO DB: Erro ao verificar existência do card '${name}':`, err.message);
-                reject(err); // Rejeita a promessa em caso de erro no DB
+                reject(err); 
             } else {
-                resolve(!!row); // Retorna true se a linha (row) existir, false caso contrário
+                resolve(!!row); 
             }
         });
     });
 }
 
-module.exports = { saveCardToDb, checkCardExists };
+/**
+ * Função para buscar um card completo pelo nome no banco de dados.
+ * @param {string} name - O nome do card a ser buscado.
+ * @returns {Promise<Object|null>} O objeto do card se encontrado, ou null.
+ */
+async function getCardByName(name) {
+    return new Promise((resolve, reject) => {
+        db.get("SELECT * FROM cards WHERE name = ?", [name], (err, row) => {
+            if (err) {
+                console.error(`ERRO DB: Erro ao buscar card '${name}':`, err.message);
+                reject(err);
+            } else {
+                resolve(row); 
+            }
+        });
+    });
+}
+
+
+module.exports = { saveCardToDb, checkCardExists, getCardByName };

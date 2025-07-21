@@ -1,4 +1,5 @@
-const { ADMIN_SECRET } = require('../main'); // Importa o ADMIN_SECRET do main.js
+// backend/utils/auth.js
+const { ADMIN_SECRET } = require('../main'); 
 
 /**
  * Middleware de autenticação para rotas de administração.
@@ -10,15 +11,14 @@ const { ADMIN_SECRET } = require('../main'); // Importa o ADMIN_SECRET do main.j
 function authenticateAdmin(req, res, next) {
     const authHeader = req.headers['authorization'];
     
-    // Verifica se o cabeçalho Authorization existe e tem o formato "Bearer <chave>"
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Acesso não autorizado. Cabeçalho de autorização Bearer ausente ou malformatado.' });
     }
 
-    const token = authHeader.split(' ')[1]; // Pega a parte da chave após "Bearer "
+    const token = authHeader.split(' ')[1]; 
 
     if (token === ADMIN_SECRET) {
-        next(); // Chave válida, prossegue para a próxima função da rota
+        next(); 
     } else {
         return res.status(401).json({ error: 'Acesso não autorizado. Chave de administração inválida.' });
     }

@@ -1,10 +1,11 @@
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+// backend/services/replicateService.js
+// REMOVIDA: const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const path = require('path');
-const fs = require('fs'); // Ainda precisamos do fs para salvar a imagem localmente
-const { REPLICATE_API_TOKEN } = require('../main'); // Importa a chave do main.js
+const fs = require('fs'); 
+const { REPLICATE_API_TOKEN } = require('../main'); 
 
 // Caminhos para diretórios de imagens e ícones (ajustados para este módulo)
-const IMAGES_DIR = path.join(__dirname, '../../public', 'images'); // Sobe dois níveis para public/images
+const IMAGES_DIR = path.join(__dirname, '../../public', 'images'); 
 
 /**
  * Chama a API do Replicate para gerar uma imagem em Base64 usando Stable Diffusion.
@@ -117,4 +118,4 @@ async function generateImageFromReplicate(prompt) {
     }
 }
 
-module.exports = { generateImageFromReplicate, IMAGES_DIR }; // Exporta a função e IMAGES_DIR
+module.exports = { generateImageFromReplicate, IMAGES_DIR };

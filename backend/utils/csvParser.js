@@ -1,3 +1,5 @@
+// backend/utils/csvParser.js
+
 /**
  * Analisa o conteúdo CSV e extrai os nomes das linguagens de programação.
  * Espera que a coluna com os nomes das linguagens se chame "ProgrammingLanguage".
@@ -7,13 +9,13 @@
 function parseLanguageNamesFromCsv(csvContent) {
     const lines = csvContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 
-    if (lines.length <= 1) { // Apenas cabeçalho ou vazio
+    if (lines.length <= 1) { 
         console.warn("AVISO: Conteúdo CSV inválido ou muito curto. Precisa de pelo menos um cabeçalho e uma linha de dados.");
         return [];
     }
 
     const header = lines[0].split(',').map(h => h.trim());
-    const languageNameColumnIndex = header.indexOf('ProgrammingLanguage'); // Encontra o índice da coluna
+    const languageNameColumnIndex = header.indexOf('ProgrammingLanguage'); 
 
     if (languageNameColumnIndex === -1) {
         console.error('ERRO CSV PARSER: Coluna "ProgrammingLanguage" não encontrada no cabeçalho do CSV. Verifique o cabeçalho.');
@@ -25,7 +27,7 @@ function parseLanguageNamesFromCsv(csvContent) {
         const columns = lines[i].split(',').map(c => c.trim());
         if (columns.length > languageNameColumnIndex) {
             const langName = columns[languageNameColumnIndex];
-            if (langName) { // Garante que o nome não é vazio
+            if (langName) { 
                 languageNames.push(langName);
             }
         }

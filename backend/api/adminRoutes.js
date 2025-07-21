@@ -1,19 +1,21 @@
+// backend/api/adminRoutes.js
 const express = require('express');
 const router = express.Router();
-const cardProcessor = require('../services/cardProcessor'); // Importa a função de processamento de cards
-const auth = require('../utils/auth'); // Importa o middleware de autenticação
-const csvParser = require('../utils/csvParser'); // Importa o parser de CSV
+const cardProcessor = require('../services/cardProcessor'); 
+const auth = require('../utils/auth'); 
+const csvParser = require('../utils/csvParser'); 
+const dbService = require('../services/dbService'); 
+
 
 // Rota para gerar dados de texto em massa via IA (Gemini)
 // Protegida pelo middleware de autenticação (auth.authenticateAdmin)
 router.post('/generate-bulk', auth.authenticateAdmin, async (req, res) => {
-    const languageNamesString = req.body.languageNames; // Nomes separados por vírgula
+    const languageNamesString = req.body.languageNames; 
 
     if (!languageNamesString || typeof languageNamesString !== 'string' || languageNamesString.trim() === '') {
         return res.status(400).json({ error: 'Nomes de linguagens para geração em massa são obrigatórios e devem ser uma string separada por vírgula.' });
     }
 
-    // Dividir a string por vírgula, remover espaços extras e filtrar vazios
     const namesArray = languageNamesString.split(',')
                                          .map(name => name.trim())
                                          .filter(name => name.length > 0);
@@ -27,22 +29,20 @@ router.post('/generate-bulk', auth.authenticateAdmin, async (req, res) => {
     const results = [];
     for (const name of namesArray) {
         try {
-            // Adicionar atraso antes de cada requisição ao Gemini (para evitar rate limit)
             await new Promise(resolve => setTimeout(resolve, cardProcessor.GEMINI_REQUEST_DELAY_MS));
 
-            // Verificar se o card já existe antes de chamar a API Gemini
-            const existingCard = await cardProcessor.checkCardExists(name); // Usando a nova função
+            const existingCard = await cardProcessor.checkCardExists(name); 
 
             if (existingCard) {
                 results.push({ name: name, success: true, message: `Card para '${name}' já existe no DB. Pulando geração Gemini.` });
                 console.log(`INFO: Card para '${name}' já existe. Pulando geração.`);
-                continue; // Pula para a próxima linguagem no loop
+                continue; 
             }
 
             const processResult = await cardProcessor.processCardUpdate(name, false); 
 
             if (processResult.success) {
-                const saved = await cardProcessor.saveCardToDb(processResult.card); // Salvar o card processado no DB
+                const saved = await cardProcessor.saveCardToDb(processResult.card); 
                 if (saved) {
                     results.push({ name: name, success: true, message: processResult.message });
                 } else {
@@ -63,8 +63,8 @@ router.post('/generate-bulk', auth.authenticateAdmin, async (req, res) => {
     console.log(`INFO: Geração em massa via Gemini concluída. Sucessos: ${successfulCount}, Falhas: ${failedCount}.`);
     res.status(200).json({
         message: `Processamento de geração em massa concluído. ${successfulCount} cards adicionados/atualizados.`,
-        successful: successfulCount, // Passando apenas a contagem para evitar enviar grandes arrays de nomes
-        failed: failedCount // Passando apenas a contagem para evitar enviar grandes arrays de erros
+        successful: successfulCount, 
+        failed: failedCount 
     });
 });
 
@@ -72,13 +72,12 @@ router.post('/generate-bulk', auth.authenticateAdmin, async (req, res) => {
 // Rota para upload de CSV e geração em massa (com verificação de existência e atraso)
 // Protegida pelo middleware de autenticação (auth.authenticateAdmin)
 router.post('/upload-csv', auth.authenticateAdmin, async (req, res) => {
-    const csvContent = req.body.csvData; // Espera o conteúdo CSV como uma string no body.csvData
+    const csvContent = req.body.csvData; 
 
     if (!csvContent || typeof csvContent !== 'string' || csvContent.trim() === '') {
         return res.status(400).json({ error: 'Nenhum conteúdo CSV válido fornecido para upload.' });
     }
 
-    // Usar o parser de CSV do módulo utils
     const languageNames = csvParser.parseLanguageNamesFromCsv(csvContent);
 
     if (languageNames.length === 0) {
@@ -90,19 +89,16 @@ router.post('/upload-csv', auth.authenticateAdmin, async (req, res) => {
     const results = [];
     for (const name of languageNames) {
         try {
-            // Adicionar atraso antes de cada requisição ao Gemini (para evitar rate limit)
             await new Promise(resolve => setTimeout(resolve, cardProcessor.GEMINI_REQUEST_DELAY_MS));
 
-            // Verificar se o card já existe antes de chamar a API Gemini
-            const existingCard = await cardProcessor.checkCardExists(name); // Usando a nova função
+            const existingCard = await cardProcessor.checkCardExists(name); 
 
             if (existingCard) {
                 results.push({ name: name, success: true, message: `Card para '${name}' já existe no DB. Pulando geração Gemini.` });
                 console.log(`INFO: Card para '${name}' já existe. Pulando geração.`);
-                continue; // Pula para a próxima linguagem no loop
+                continue; 
             }
 
-            // Se não existe, procede com a geração Gemini
             const processResult = await cardProcessor.processCardUpdate(name, false); 
 
             if (processResult.success) {
@@ -131,5 +127,23 @@ router.post('/upload-csv', auth.authenticateAdmin, async (req, res) => {
         failed: failedCount
     });
 });
+
+// NOVA ROTA: Buscar um card específico pelo nome
+// Protegida pelo middleware de autenticação (auth.authenticateAdmin)
+router.get('/cards/:name', auth.authenticateAdmin, async (req, res) => {
+    const languageName = req.params.name;
+    try {
+        const card = await dbService.getCardByName(languageName); // Usando dbService para buscar o card
+        if (card) {
+            res.json(card);
+        } else {
+            res.status(404).json({ message: `Card '${languageName}' não encontrado.` });
+        }
+    } catch (error) {
+        console.error(`ERRO: Erro ao buscar card '${languageName}':`, error);
+        res.status(500).json({ error: `Erro interno ao buscar card '${languageName}'.` });
+    }
+});
+
 
 module.exports = router;
