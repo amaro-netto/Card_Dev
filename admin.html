@@ -569,9 +569,8 @@
                 </div>
                 <div class="card-footer">
                     <span>Ilustração: Amaro AI</span>
-                    </div>
+                </div>
             `;
-            // Não há mais lógica de botão de atualização aqui dentro do card
             return cardDiv;
         };
 
@@ -592,8 +591,8 @@
                     singleCardContainer.innerHTML = '<p class="text-gray-500">Busque por uma linguagem para ver o card aqui.</p>';
                     updateMessage(adminMessageAreaSingle, '');
                     singleLanguageInput.value = '';
-                    updateSingleCardButton.style.display = 'none'; // Esconde o botão de atualização individual
-                    currentSingleCardName = null; // Limpa o nome do card exibido
+                    updateSingleCardButton.style.display = 'none'; 
+                    currentSingleCardName = null; 
                 } else {
                     // Ao entrar na seção de atualização individual, reseta para o estado inicial
                     singleCardContainer.innerHTML = '<p class="text-gray-500">Busque por uma linguagem para ver o card aqui.</p>';
@@ -606,7 +605,7 @@
                 updateMessage(adminMessageAreaGenerate, '');
                 updateMessage(adminMessageAreaCsvUpload, '');
                 updateMessage(adminMessageAreaUpdateAll, '');
-                selectedCsvFile = null; // Limpa arquivo CSV selecionado
+                selectedCsvFile = null; 
                 csvFileNameDisplay.textContent = 'Nenhum arquivo selecionado.';
                 uploadCsvButton.disabled = true;
             });
@@ -857,7 +856,7 @@
                     currentSingleCardName = null;
                 } else {
                     singleCardContainer.innerHTML = ''; 
-                    const cardElement = createCardElementAdmin(result); // Chamando a função corretamente
+                    const cardElement = createCardElementAdmin(result); 
                     singleCardContainer.appendChild(cardElement); 
 
                     // Ajusta as fontes do card recém-criado

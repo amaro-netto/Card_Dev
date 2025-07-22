@@ -110,7 +110,7 @@ async function generateImageFromReplicate(prompt) {
 
                 const imageBuffer = await imageResponse.buffer(); 
                 const base64Data = imageBuffer.toString('base64');
-                
+
                 return { base64Data: base64Data, format: format }; // Retorna o base64 E o formato inferido
 
             } else {

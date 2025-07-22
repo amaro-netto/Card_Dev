@@ -203,6 +203,7 @@
                 iconHtmlContent = `<svg class="card-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>${cardData.name}</title>${defaultSvgPath}</svg>`;
             }
 
+            // ATENÇÃO AQUI: O src da imagem agora depende da `imageUrl` vinda do backend
             cardDiv.innerHTML = `
                 <div class="card-header">
                     <div class="card-name-wrapper">
